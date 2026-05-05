@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import PropTypes from "prop-types";
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-async function Loginuser(credentials) {
+async function loginUser(credentials) {
   return fetch("http://localhost:8080/LogInPage", {
     method: "POST",
     headers: {
@@ -12,25 +12,25 @@ async function Loginuser(credentials) {
     },
     body: JSON.stringify(credentials)
   })
-  .then(data => data.json)
+  .then(data => data.json());
 }
 
 
 
 
-const LoginPage = () => {
+const LoginPage = ({ setToken }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = async e => {
     e.preventDefault();
-    const token = await LogInuser({
+    const token = await loginUser({
       email,
       password
     });
     setToken(token);
-    navigate("/ar");
+    navigate("/ArPage");
   }
 
   return (
@@ -72,8 +72,8 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage({ setToken });
+export default LoginPage;
 
-LoginPage.PropTypes = {
+LoginPage.propTypes = {
   setToken: PropTypes.func.isRequired
-}
+};

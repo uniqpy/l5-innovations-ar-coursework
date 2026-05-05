@@ -20,7 +20,7 @@ export default function App() {
   }
   return (
    <Routes>
-    <Route path ="/LogInPage" element={<Login setToken={setToken} />} />
+    <Route path ="/LogInPage" element={<LogInPage setToken={setToken} />} />
     <Route
       path="/ArPage"
       element={
