@@ -1,19 +1,7 @@
-// LoginPage.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PropTypes from "prop-types";
 import 'bootstrap/dist/css/bootstrap.min.css';
-
-async function loginUser(credentials) {
-  return fetch("http://localhost:8080/LogInPage", {
-    method: "POST",
-    headers: {
-      "Content-Type" : "application/json"
-    },
-    body: JSON.stringify(credentials)
-  })
-  .then(data => data.json());
-}
 
 
 
@@ -21,22 +9,41 @@ async function loginUser(credentials) {
 const LoginPage = ({ setToken }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = async e => {
     e.preventDefault();
-    const token = await loginUser({
-      email,
-      password
-    });
-    setToken(token);
-    navigate("/ArPage");
+    setError('');
+    try {
+      const response = await fetch("http://localhost:8080/LogInPage", {
+        method: "POST",
+        headers: {
+          "Content-Type" : "application/json"
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.error || "Login failed");
+        return;
+      }
+
+      const data = await response.json();
+      setToken(data);
+      navigate("/ArPage");
+    } catch (err) {
+      setError("Server error. Please try again.");
+      console.error(err);
+    }
   }
 
   return (
     <div className="d-flex align-items-center justify-content-center vh-100 bg-light">
       <div className="card shadow p-4" style={{ maxWidth: '400px', width: '100%' }}>
         <h2 className="text-center mb-4">AR Maintaince Tool Log In</h2>
+        {error && <div className="alert alert-danger" role="alert">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-floating mb-3">
             <input

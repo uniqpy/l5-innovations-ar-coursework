@@ -5,6 +5,7 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 
 const ArPage = () => {
   const [CameraPermissions, setCameraPermissions] = useState(null);
+
   useEffect(() => {
     const checkCamera = async () => {
       try {
@@ -25,37 +26,18 @@ const ArPage = () => {
   return (
     <div style={{ width: "100%", height: "100vh", position: "relative" }}>
       
-      {/* Hamburger Button ALWAYS visible */}
-      <button
-        className="btn btn-dark"
-        style={{
-          position: "absolute",
-          top: "20px",
-          left: "20px",
-          zIndex: 10000,
-          width: "50px",
-          height: "50px",
-          borderRadius: "50%",
-          padding: 0,
-        }}
-        onClick={() => setMenuOpen(!menuOpen)}
-      >
-        <i className="bi bi-list" style={{ fontSize: "1.5rem" }}></i>
-      </button>
-
-      {/* Sliding Menu */}
+      {/* Sidebar */}
       <div
         style={{
           position: "absolute",
           top: 0,
-          left: menuOpen ? "0" : "-220px",
+          left: 0,
           width: "200px",
           height: "100%",
           backgroundColor: "rgba(255,255,255,0.95)",
           boxShadow: "2px 0 8px rgba(0,0,0,0.3)",
           paddingTop: "70px",
           zIndex: 9999,
-          transition: "left 0.3s ease",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -112,7 +94,7 @@ const ArPage = () => {
           }}
         >
           <p>Camera access is required for AR functionality.</p>
-          <p>You can still use the menu.</p>
+          <p>You can still use the menu for the sake of testing, though we should probably get rid of this.</p>
         </div>
       )}
 
