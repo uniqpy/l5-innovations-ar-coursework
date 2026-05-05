@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import "aframe";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -7,24 +7,33 @@ import faultsData from '../data/faults.json';
 import './ArPage.css';
 
 const ArPage = () => {
-  const [CameraPermissions, setCameraPermissions] = useState(null);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showFaultsModal, setShowFaultsModal] = useState(false);
   const [selectedFault, setSelectedFault] = useState(null);
+  const [cameraReady, setCameraReady] = useState(null);
+  const [arLoaded, setArLoaded] = useState(false);
+  const sceneRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const checkCamera = async () => {
+    const loadAR = async () => {
       try {
-        await navigator.mediaDevices.getUserMedia({ video: true});
-        setCameraPermissions(true);
+        await navigator.mediaDevices.getUserMedia({ video: true });
+        setCameraReady(true);
       } catch (err) {
-        console.error("Camera Access Denied", err);
-        setCameraPermissions(false);
+        console.error("Camera access denied:", err);
+        setCameraReady(false);
+        return;
       }
+
+      const script = document.createElement("script");
+      script.src = "https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.min.js";
+      script.async = true;
+      script.onload = () => setArLoaded(true);
+      document.body.appendChild(script); 
     };
-    checkCamera();
-  },[]);
+    loadAR();
+  }, []);
 
   const handleLogout = () => {
     sessionStorage.removeItem("token");
@@ -48,12 +57,8 @@ const ArPage = () => {
     setSelectedFault(null);
   };
 
-  if (CameraPermissions === null) {
-    return <p>Requesting camera permissions</p>;
-  }
-
   return (
-    <div className="ar-page-container">
+    <div className="ar-page-container" style = {{display: 'flex', height: '100vh'}}>
       
       {/* Sidebar */}
       <div className="ar-sidebar">
@@ -83,34 +88,39 @@ const ArPage = () => {
       </div>
 
       {/* AR Scene only renders if camera allowed */}
-      {CameraPermissions === true && (
+      {cameraReady === null && (
+        <p style={{ textAlign: "center", marginTop: "50%" }}>
+          Requesting camera permissions...
+        </p>
+      )}
+
+        {cameraReady === false && (
+          <div className="message-box">
+            <p>Camera access was denied.</p>
+            <p>Please enable camera permissions to use AR.</p>
+          </div>
+        )}
+
+        {cameraReady === true && !arLoaded && (
+          <p style={{ textAlign: "center", marginTop: "50%" }}>
+            Loading AR...
+          </p>
+        )}
+
+      {cameraReady === true && arLoaded && (
         <a-scene
+          ref={sceneRef}
           vr-mode-ui="enabled: false"
           embedded
           arjs="sourceType: webcam; debugUIEnabled: false;"
-          className="ar-scene"
+          style={{ width: '100%', height: '100%' }}
         >
           <a-marker preset="hiro">
             <a-box position="0 0.5 0" color="red"></a-box>
           </a-marker>
           <a-entity camera></a-entity>
-        </a-scene>
-      )}
-
-      {/* Message if camera denied */}
-      {CameraPermissions === false && (
-        <div className="message-box">
-          <p>Camera access is required for AR functionality.</p>
-          <p>You can still use the menu for the sake of testing, though we should probably get rid of this.</p>
-        </div>
-      )}
-
-      {/* Message if requesting permissions */}
-      {CameraPermissions === null && (
-        <div className="message-box">
-          <p>Requesting camera permissions...</p>
-        </div>
-      )}
+          </a-scene>
+)}
 
       {/* Help Modal */}
       {showHelpModal && (
