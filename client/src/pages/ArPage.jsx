@@ -1,10 +1,17 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import "aframe";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
+import faultsData from '../data/faults.json';
+import './ArPage.css';
 
 const ArPage = () => {
   const [CameraPermissions, setCameraPermissions] = useState(null);
+  const [showHelpModal, setShowHelpModal] = useState(false);
+  const [showFaultsModal, setShowFaultsModal] = useState(false);
+  const [selectedFault, setSelectedFault] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const checkCamera = async () => {
@@ -19,47 +26,59 @@ const ArPage = () => {
     checkCamera();
   },[]);
 
+  const handleLogout = () => {
+    sessionStorage.removeItem("token");
+    navigate("/LogInPage");
+  };
+
+  const toggleHelpModal = () => {
+    setShowHelpModal(!showHelpModal);
+  };
+
+  const toggleFaultsModal = () => {
+    setShowFaultsModal(!showFaultsModal);
+    setSelectedFault(null); // Reset selected fault when closing
+  };
+
+  const handleSelectFault = (fault) => {
+    setSelectedFault(fault);
+  };
+
+  const handleBackToFaultsList = () => {
+    setSelectedFault(null);
+  };
+
   if (CameraPermissions === null) {
     return <p>Requesting camera permissions</p>;
   }
 
   return (
-    <div style={{ width: "100%", height: "100vh", position: "relative" }}>
+    <div className="ar-page-container">
       
       {/* Sidebar */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "200px",
-          height: "100%",
-          backgroundColor: "rgba(255,255,255,0.95)",
-          boxShadow: "2px 0 8px rgba(0,0,0,0.3)",
-          paddingTop: "70px",
-          zIndex: 9999,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-        }}
-      >
+      <div className="ar-sidebar">
         <button
-          className="btn btn-primary mb-3 w-75"
-          style={{ height: "50px" }}
+          className="btn btn-primary mb-3 w-75 sidebar-button"
+          onClick={toggleFaultsModal}
         >
-          <i className="bi bi-plus-lg"></i>
+          View All Active Faults
         </button>
         <button
-          className="btn btn-secondary mb-3 w-75"
-          style={{ height: "50px" }}
+          className="btn btn-secondary mb-3 w-75 sidebar-button"
         >
-          <i className="bi bi-camera"></i>
+          Tool Checker Mode
         </button>
         <button
-          className="btn btn-success mb-3 w-75"
-          style={{ height: "50px" }}
+          className="btn btn-info mb-3 w-75 sidebar-button"
+          onClick={toggleHelpModal}
         >
-          <i className="bi bi-x-lg"></i>
+          Help
+        </button>
+        <button
+          className="btn btn-danger w-75 sidebar-button"
+          onClick={handleLogout}
+        >
+          Log Out
         </button>
       </div>
 
@@ -69,7 +88,7 @@ const ArPage = () => {
           vr-mode-ui="enabled: false"
           embedded
           arjs="sourceType: webcam; debugUIEnabled: false;"
-          style={{ width: "100%", height: "100%", position: "absolute", top: 0, left: 0 }}
+          className="ar-scene"
         >
           <a-marker preset="hiro">
             <a-box position="0 0.5 0" color="red"></a-box>
@@ -80,19 +99,7 @@ const ArPage = () => {
 
       {/* Message if camera denied */}
       {CameraPermissions === false && (
-        <div
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            backgroundColor: "rgba(255,255,255,0.9)",
-            padding: "20px",
-            borderRadius: "10px",
-            textAlign: "center",
-            zIndex: 10000,
-          }}
-        >
+        <div className="message-box">
           <p>Camera access is required for AR functionality.</p>
           <p>You can still use the menu for the sake of testing, though we should probably get rid of this.</p>
         </div>
@@ -100,20 +107,69 @@ const ArPage = () => {
 
       {/* Message if requesting permissions */}
       {CameraPermissions === null && (
-        <div
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            backgroundColor: "rgba(255,255,255,0.9)",
-            padding: "20px",
-            borderRadius: "10px",
-            textAlign: "center",
-            zIndex: 10000,
-          }}
-        >
+        <div className="message-box">
           <p>Requesting camera permissions...</p>
+        </div>
+      )}
+
+      {/* Help Modal */}
+      {showHelpModal && (
+        <div className="modal-overlay">
+          <div className="modal-content modal-content-help">
+            <h3 className="help-title">Help</h3>
+            <p className="help-description">example test, if you need help there are many sources that you can go to something something</p>
+            <button
+              className="btn btn-primary"
+              onClick={toggleHelpModal}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Faults Modal */}
+      {showFaultsModal && (
+        <div className="modal-overlay">
+          <div className="modal-content modal-content-faults">
+            {!selectedFault ? (
+              <>
+                <h3 className="modal-title modal-title-center">Active Faults</h3>
+                <div className="fault-list-container">
+                  {faultsData.faults.map((fault) => (
+                    <div
+                      key={fault.id}
+                      className="fault-item"
+                      onClick={() => handleSelectFault(fault)}
+                    >
+                      <h5 className="fault-title">{fault.title}</h5>
+                      <p className="fault-description">{fault.description}</p>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  className="btn btn-secondary w-100 modal-close-button"
+                  onClick={toggleFaultsModal}
+                >
+                  Close
+                </button>
+              </>
+            ) : (
+              <>
+                <h3 className="modal-title">{selectedFault.title}</h3>
+                <p className="modal-description">{selectedFault.description}</p>
+                <div className="fault-detail-box">
+                  <p className="fault-detail-text">{selectedFault.details}</p>
+                </div>
+                <button
+                  className="btn btn-secondary w-100 fault-back-button"
+                  onClick={handleBackToFaultsList}
+                >
+                  Back to List
+                </button>
+              </>
+            )}
+          </div>
         </div>
       )}
 

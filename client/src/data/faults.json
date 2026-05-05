@@ -1,0 +1,22 @@
+{
+  "faults": [
+    {
+      "id": 1,
+      "title": "Pump Vibration",
+      "description": "Excessive vibration detected in pump unit",
+      "details": "The pump is experiencing vibration levels exceeding safe thresholds. This may indicate bearing wear or misalignment. Immediate inspection recommended."
+    },
+    {
+      "id": 2,
+      "title": "Temperature Sensor Malfunction",
+      "description": "Temperature reading out of range",
+      "details": "The temperature sensor on the cooling system is not responding correctly. Check sensor connections and calibration. May need replacement."
+    },
+    {
+      "id": 3,
+      "title": "Pressure Valve Failure",
+      "description": "Pressure relief valve not opening",
+      "details": "The pressure relief valve is stuck and not opening at set pressure. This is a critical issue. Stop equipment immediately and investigate."
+    }
+  ]
+}
