@@ -1,23 +1,37 @@
 // LoginPage.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import PropTypes from "prop-types";
 import 'bootstrap/dist/css/bootstrap.min.css';
+
+async function Loginuser(credentials) {
+  return fetch("http://localhost:8080/LogInPage", {
+    method: "POST",
+    headers: {
+      "Content-Type" : "application/json"
+    },
+    body: JSON.stringify(credentials)
+  })
+  .then(data => data.json)
+}
+
+
+
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
-    // For now, just log the input values WE WILL OBIVIOSULY HASH/ENCRYPT THIS AND COMPARE WITH VALID USERS WITH OUR BACKEND API
-    if (email && password) {
-        console.log("user log in");
-        navigate("/ar")
-    } else {
-        alert("Enter Valid Email and Password")
-    }
-  };
+    const token = await LogInuser({
+      email,
+      password
+    });
+    setToken(token);
+    navigate("/ar");
+  }
 
   return (
     <div className="d-flex align-items-center justify-content-center vh-100 bg-light">
@@ -58,4 +72,8 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default LoginPage({ setToken });
+
+LoginPage.PropTypes = {
+  setToken: PropTypes.func.isRequired
+}
