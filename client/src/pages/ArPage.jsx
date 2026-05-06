@@ -1,39 +1,17 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, Suspense, use } from 'react';
 import { useNavigate } from 'react-router-dom';
-import "aframe";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import faultsData from '../data/faults.json';
 import './ArPage.css';
 
+
 const ArPage = () => {
+  const navigate = useNavigate();
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showFaultsModal, setShowFaultsModal] = useState(false);
   const [selectedFault, setSelectedFault] = useState(null);
-  const [cameraReady, setCameraReady] = useState(null);
-  const [arLoaded, setArLoaded] = useState(false);
-  const sceneRef = useRef(null);
-  const navigate = useNavigate();
 
-  useEffect(() => {
-    const loadAR = async () => {
-      try {
-        await navigator.mediaDevices.getUserMedia({ video: true });
-        setCameraReady(true);
-      } catch (err) {
-        console.error("Camera access denied:", err);
-        setCameraReady(false);
-        return;
-      }
-
-      const script = document.createElement("script");
-      script.src = "https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.min.js";
-      script.async = true;
-      script.onload = () => setArLoaded(true);
-      document.body.appendChild(script); 
-    };
-    loadAR();
-  }, []);
 
   const handleLogout = () => {
     sessionStorage.removeItem("token");
@@ -87,40 +65,6 @@ const ArPage = () => {
         </button>
       </div>
 
-      {/* AR Scene only renders if camera allowed */}
-      {cameraReady === null && (
-        <p style={{ textAlign: "center", marginTop: "50%" }}>
-          Requesting camera permissions...
-        </p>
-      )}
-
-        {cameraReady === false && (
-          <div className="message-box">
-            <p>Camera access was denied.</p>
-            <p>Please enable camera permissions to use AR.</p>
-          </div>
-        )}
-
-        {cameraReady === true && !arLoaded && (
-          <p style={{ textAlign: "center", marginTop: "50%" }}>
-            Loading AR...
-          </p>
-        )}
-
-      {cameraReady === true && arLoaded && (
-        <a-scene
-          ref={sceneRef}
-          vr-mode-ui="enabled: false"
-          embedded
-          arjs="sourceType: webcam; debugUIEnabled: false;"
-          style={{ width: '100%', height: '100%' }}
-        >
-          <a-marker preset="hiro">
-            <a-box position="0 0.5 0" color="red"></a-box>
-          </a-marker>
-          <a-entity camera></a-entity>
-          </a-scene>
-)}
 
       {/* Help Modal */}
       {showHelpModal && (
