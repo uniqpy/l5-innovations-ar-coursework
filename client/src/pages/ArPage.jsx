@@ -1,10 +1,31 @@
-import React, { useEffect, useRef, useState, Suspense, use } from 'react';
+import React, { useEffect, useRef, useState, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import faultsData from '../data/faults.json';
 import './ArPage.css';
 
+const ArScene = memo(() => {
+  useEffect(() => {
+    // Set willReadFrequently on all canvases to address performance warning
+    document.querySelectorAll('canvas').forEach(canvas => {
+      canvas.setAttribute('willReadFrequently', 'true');
+    });
+  }, []);
+
+  return (
+    <a-scene className="ar-scene" arjs="sourceType: webcam; debugUIEnabled: false;" vr-mode-ui="enabled: false" renderer="logarithmicDepthBuffer: true;">
+      <a-marker preset="hiro">
+        <a-box 
+          position="0 0.5 0"
+          material="color: #FF6b35; opacity: 0.7"
+          scale="0.5 0.1 0.5"
+        />
+      </a-marker>
+      <a-entity camera></a-entity>
+    </a-scene>
+  );
+});
 
 const ArPage = () => {
   const navigate = useNavigate();
@@ -37,7 +58,10 @@ const ArPage = () => {
 
   return (
     <div className="ar-page-container" style = {{display: 'flex', height: '100vh'}}>
-      
+
+      <ArScene />
+
+
       {/* Sidebar */}
       <div className="ar-sidebar">
         <button
