@@ -5,23 +5,59 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import faultsData from '../data/faults.json';
 import './ArPage.css';
 
-const ArScene = memo(() => {
+const ArScene = (() => {
+  const [textIndex, setTextIndex] = useState(0);
+  const texts = ["hello this is a gas leak", "you need to patch this with tape", "but first cut of the pump that supplies the gas"];
+  const textRef = useRef(null);
+  const boxRef = useRef(null);
+
+
   useEffect(() => {
-    // Set willReadFrequently on all canvases to address performance warning
     document.querySelectorAll('canvas').forEach(canvas => {
       canvas.setAttribute('willReadFrequently', 'true');
     });
-  }, []);
+
+    const boxEl = boxRef.current;
+    if (!boxEl) return;
+
+    const handleClick = () => {
+      const nextIndex = (textIndex + 1) % texts.length;
+      setTextIndex(nextIndex);
+      if (textRef.current) {
+        textRef.current.setAttribute('value', texts[nextIndex]);
+      }
+    };
+
+    boxEl.addEventListener('touchstart', handleClick);
+
+    return () => {
+      boxEl.removeEventListener('touchstart', handleClick);
+    };
+  }, [textIndex, texts]);
 
   return (
-    <a-scene className="ar-scene" arjs="sourceType: webcam; debugUIEnabled: false;" vr-mode-ui="enabled: false" renderer="logarithmicDepthBuffer: true;">
+    <a-scene className="ar-scene" embedded xrweb arjs="sourceType: webcam; debugUIEnabled: false;" vr-mode-ui="enabled: false" renderer="logarithmicDepthBuffer: true;">
       <a-marker preset="hiro">
         <a-box 
+          ref={boxRef}
           position="0 0.5 0"
           material="color: #FF6b35; opacity: 0.7"
           scale="0.5 0.1 0.5"
         />
+        <a-text
+          ref = {textRef}
+          value = {texts[textIndex]}
+          position = "0 0.7 0"
+          color = "#000"
+          material = "color: #000000; opacity: 0.8"
+          align="center"
+        />
       </a-marker>
+      <a-box
+        position="1 0.5 -2"
+        material="color: #ff3b5e; opacity: 0.7"
+        scale="0.5 0.5 0.5 "
+      />
       <a-entity camera></a-entity>
     </a-scene>
   );
@@ -31,6 +67,7 @@ const ArPage = () => {
   const navigate = useNavigate();
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showFaultsModal, setShowFaultsModal] = useState(false);
+  const [showReportFaultsModal, setshowReportFaultsModal] = useState(false);
   const [selectedFault, setSelectedFault] = useState(null);
 
 
@@ -41,6 +78,10 @@ const ArPage = () => {
 
   const toggleHelpModal = () => {
     setShowHelpModal(!showHelpModal);
+  };
+
+  const toggleReportFaultsModal = () => {
+    setshowReportFaultsModal(!showReportFaultsModal);
   };
 
   const toggleFaultsModal = () => {
@@ -150,7 +191,7 @@ const ArPage = () => {
           </div>
         </div>
       )}
-
+      {/* Report Faults Modal */}
     </div>
   );
 };
