@@ -23,6 +23,11 @@
   object-fit: cover;
 }
 
+#arjs-video {
+  z-index: 0 !important;
+}
+
+
 .ar-sidebar {
   position: fixed;
   top: 0;

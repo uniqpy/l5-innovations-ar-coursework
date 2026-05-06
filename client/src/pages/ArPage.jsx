@@ -53,12 +53,6 @@ const ArScene = (() => {
           align="center"
         />
       </a-marker>
-      <a-box
-        position="1 0.5 -2"
-        material="color: #ff3b5e; opacity: 0.7"
-        scale="0.5 0.5 0.5 "
-      />
-      <a-entity camera></a-entity>
     </a-scene>
   );
 });
