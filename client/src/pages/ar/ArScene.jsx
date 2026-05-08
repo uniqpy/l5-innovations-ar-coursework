@@ -3,7 +3,7 @@ import TargetSrc from "../../assets/mind_markers/targets.mind?url";
 import { MARKERS } from "./markers";
 
 // Main AR scene wrapper that connects MindAR events to React callbacks.
-const ArScene = ({ ArMarkerFound, ArMarkerLost }) => {
+const ArScene = ({ onTargetFound: ArMarkerFound, onTargetLost: ArMarkerLost }) => {
   // Refs used for scene access, tracked marker entities, and stable callback references.
   const sceneRef = useRef(null);
   const targetRefs = useRef([]);

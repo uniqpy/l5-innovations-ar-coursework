@@ -1,15 +1,16 @@
 import React from "react";
 
-const RepairGuideModal = ({ ArMarker, stepIndex, onPrevious, onNext, onClose }) => {
-  if (!ArMarker || !ArMarker.guideSteps || ArMarker.guideSteps.length === 0) return null;
+const RepairGuideModal = ({ marker, ArMarker, stepIndex, onPrevious, onNext, onClose }) => {
+  const guideMarker = marker || ArMarker;
+  if (!guideMarker || !guideMarker.guideSteps || guideMarker.guideSteps.length === 0) return null;
 
   return (
     <div className="modal-overlay">
       <div className="modal-content modal-content-help">
-        <h3 className="help-title">{ArMarker.label} Guide</h3>
-        <p className="help-description">{ArMarker.guideSteps[stepIndex]}</p>
+        <h3 className="help-title">{guideMarker.label} Guide</h3>
+        <p className="help-description">{guideMarker.guideSteps[stepIndex]}</p>
         <p className="modal-description">
-          Step {stepIndex + 1} of {ArMarker.guideSteps.length}
+          Step {stepIndex + 1} of {guideMarker.guideSteps.length}
         </p>
         <div className="d-flex justify-content-center gap-3">
           <button className="btn btn-outline-secondary" onClick={onPrevious}>
