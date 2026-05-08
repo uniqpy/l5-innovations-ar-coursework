@@ -15,8 +15,8 @@ const ArScene = (() => {
     const sceneEl = sceneRef.current;
     if (!sceneEl) return undefined;
 
-    const arSystem = sceneEl.systems["mindar-image-system"];
     const onRenderStart = () => {
+      const arSystem = sceneEl.systems["mindar-image-system"];
       if (arSystem) {
         arSystem.start();
       }
@@ -26,6 +26,7 @@ const ArScene = (() => {
 
     return () => {
       sceneEl.removeEventListener("renderstart", onRenderStart);
+      const arSystem = sceneEl.systems["mindar-image-system"];
       if (arSystem) {
         arSystem.stop();
       }
@@ -36,7 +37,7 @@ const ArScene = (() => {
     <a-scene
       className="ar-scene"
       ref={sceneRef}
-      mindar-image={`imageTargetSrc: ${spannerTargetSrc}; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;`}
+      mindar-image={`imageTargetSrc: ${spannerTargetSrc}; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes;`}
       color-space="sRGB"
       embedded
       renderer="colorManagement: true, physicallyCorrectLights"
