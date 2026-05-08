@@ -1,140 +1,50 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
-import faultsData from '../data/faults.json';
-import './ArPage.css';
-import TargetSrc from '../assets/mind_markers/qr_code_markers.mind?url';
-
-
-const ArScene = (() => {
-  const sceneRef = useRef(null);
-
-  useEffect(() => {
-    const sceneEl = sceneRef.current;
-    if (!sceneEl) return undefined;
-
-    const onArReady = () => {
-      console.info("MindAR ready");
-    };
-
-    const onArError = (event) => {
-      console.error("MindAR error", event?.detail);
-    };
-
-    sceneEl.addEventListener("arReady", onArReady);
-    sceneEl.addEventListener("arError", onArError);
-
-    return () => {
-      sceneEl.removeEventListener("arReady", onArReady);
-      sceneEl.removeEventListener("arError", onArError);
-      const arSystem = sceneEl.systems["mindar-image-system"];
-      if (arSystem) {
-        arSystem.stop();
-      }
-    };
-  }, []);
-
-  return (
-    <a-scene
-      className="ar-scene"
-      ref={sceneRef}
-      mindar-image={`imageTargetSrc: ${TargetSrc}; maxTrack: 3; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: no;`}
-      color-space="sRGB"
-      embedded
-      renderer="colorManagement: true, physicallyCorrectLights"
-      vr-mode-ui="enabled: false"
-      device-orientation-permission-ui="enabled: false"
-    >
-      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
-      <a-entity mindar-image-target="targetIndex: 0">
-        <a-box
-          position="0 0 0.08"
-          rotation="0 0 0"
-          width="0.55"
-          height="0.35"
-          depth="0.12"
-          color="#17c3b2"
-          material="metalness: 0.2; roughness: 0.5; opacity: 0.9; transparent: true"
-        ></a-box>
-        <a-text
-          value="Spanner"
-          position="0 0.32 0.08"
-          align="center"
-          color="#ffd166"
-          width="1.6"
-          shader="msdf"
-        ></a-text>
-      </a-entity>
-
-      <a-entity mindar-image-target="targetIndex: 1">
-        <a-box
-          position="0 0 0.08"
-          rotation="0 0 0"
-          width="0.55"
-          height="0.35"
-          depth="0.12"
-          color="#17c3b2"
-          material="metalness: 0.2; roughness: 0.5; opacity: 0.9; transparent: true"
-        ></a-box>
-        <a-text
-          value="Screwdriver "
-          position="0 0.32 0.08"
-          align="center"
-          color="#ffd166"
-          width="1.6"
-          shader="msdf"
-        ></a-text>
-      </a-entity>
-
-      <a-entity mindar-image-target="targetIndex: 2">
-        <a-box
-          position="0 0 0.08"
-          rotation="0 0 0"
-          width="0.55"
-          height="0.35"
-          depth="0.12"
-          color="#17c3b2"
-          material="metalness: 0.2; roughness: 0.5; opacity: 0.9; transparent: true"
-        ></a-box>
-        <a-text
-          value="Electric Box"
-          position="0 0.32 0.08"
-          align="center"
-          color="#ffd166"
-          width="1.6"
-          shader="msdf"
-        ></a-text>
-      </a-entity>
-    </a-scene>
-  );
-});
+import faultsData from "../data/faults.json";
+import "./ArPage.css";
+import ArScene from "./ar/ArScene";
+import HelpModal from "./ar/HelpModal";
+import FaultsModal from "./ar/FaultsModal";
+import ToolTrackerModal from "./ar/ToolTrackerModal";
+import ScanConfirmPopup from "./ar/ScanConfirmPopup";
+import MachineryGuideModal from "./ar/MachineryGuideModal";
+import { MARKERS } from "./ar/markers";
 
 const ArPage = () => {
   const navigate = useNavigate();
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showFaultsModal, setShowFaultsModal] = useState(false);
-  const [showReportFaultsModal, setshowReportFaultsModal] = useState(false);
+  const [showToolTrackerModal, setShowToolTrackerModal] = useState(false);
   const [selectedFault, setSelectedFault] = useState(null);
-
+  const [checkedOutToolIndexes, setCheckedOutToolIndexes] = useState([]);
+  const [scanConfirmation, setScanConfirmation] = useState(null);
+  const [showGuideModal, setShowGuideModal] = useState(false);
+  const [guideMarkerIndex, setGuideMarkerIndex] = useState(null);
+  const [guideStepIndex, setGuideStepIndex] = useState(0);
+  const checkedOutToolIndexesRef = useRef([]);
 
   const handleLogout = () => {
     sessionStorage.removeItem("token");
     navigate("/LogInPage");
   };
 
-  const toggleHelpModal = () => {
-    setShowHelpModal(!showHelpModal);
-  };
+  useEffect(() => {
+    checkedOutToolIndexesRef.current = checkedOutToolIndexes;
+  }, [checkedOutToolIndexes]);
 
-  const toggleReportFaultsModal = () => {
-    setshowReportFaultsModal(!showReportFaultsModal);
+  const toggleHelpModal = () => {
+    setShowHelpModal((currentState) => !currentState);
   };
 
   const toggleFaultsModal = () => {
-    setShowFaultsModal(!showFaultsModal);
-    setSelectedFault(null); // Reset selected fault when closing
+    setShowFaultsModal((currentState) => !currentState);
+    setSelectedFault(null);
+  };
+
+  const toggleToolTrackerModal = () => {
+    setShowToolTrackerModal((currentState) => !currentState);
   };
 
   const handleSelectFault = (fault) => {
@@ -145,100 +55,120 @@ const ArPage = () => {
     setSelectedFault(null);
   };
 
+  const handleTargetFound = useCallback((targetIndex) => {
+    const marker = MARKERS[targetIndex];
+    if (!marker) return;
+
+    if (marker.type === "tool") {
+      setShowGuideModal(false);
+      setGuideMarkerIndex(null);
+      setScanConfirmation((currentConfirmation) => {
+        if (currentConfirmation?.targetIndex === targetIndex) {
+          return currentConfirmation;
+        }
+
+        const isCheckedOut = checkedOutToolIndexesRef.current.includes(targetIndex);
+
+        return {
+          targetIndex,
+          toolLabel: marker.label,
+          actionLabel: isCheckedOut ? "Check In" : "Check Out",
+        };
+      });
+      return;
+    }
+
+    setScanConfirmation(null);
+    setGuideMarkerIndex(targetIndex);
+    setGuideStepIndex(0);
+    setShowGuideModal(true);
+  }, []);
+
+  const handleTargetLost = useCallback(() => {
+    // No action needed on marker loss for this flow.
+  }, []);
+
+  const handleConfirmToolAction = () => {
+    if (!scanConfirmation) return;
+    const { targetIndex } = scanConfirmation;
+
+    setCheckedOutToolIndexes((currentCheckedOut) => {
+      if (currentCheckedOut.includes(targetIndex)) {
+        return currentCheckedOut.filter((index) => index !== targetIndex);
+      }
+      return [...currentCheckedOut, targetIndex];
+    });
+
+    setScanConfirmation(null);
+  };
+
+  const checkedOutTools = checkedOutToolIndexes
+    .map((index) => MARKERS[index]?.label || `Marker ${index}`)
+    .sort((a, b) => a.localeCompare(b));
+
+  const activeGuideMarker = guideMarkerIndex !== null ? MARKERS[guideMarkerIndex] : null;
+  const guideSteps = activeGuideMarker?.guideSteps || [];
+
+  const goToPreviousGuideStep = () => {
+    if (guideSteps.length === 0) return;
+    setGuideStepIndex((currentStep) => (currentStep - 1 + guideSteps.length) % guideSteps.length);
+  };
+
+  const goToNextGuideStep = () => {
+    if (guideSteps.length === 0) return;
+    setGuideStepIndex((currentStep) => (currentStep + 1) % guideSteps.length);
+  };
+
   return (
-    <div className="ar-page-container" style = {{display: 'flex', height: '100vh'}}>
+    <div className="ar-page-container" style={{ display: "flex", height: "100vh" }}>
+      <ArScene onTargetFound={handleTargetFound} onTargetLost={handleTargetLost} />
 
-      <ArScene />
-
-      {/* Sidebar */}
       <div className="ar-sidebar">
-        <button
-          className="btn btn-primary mb-3 w-75 sidebar-button"
-          onClick={toggleFaultsModal}
-        >
+        <button className="btn btn-primary mb-3 w-75 sidebar-button" onClick={toggleFaultsModal}>
           View All Active Faults
         </button>
-        <button
-          className="btn btn-secondary mb-3 w-75 sidebar-button"
-        >
-          Tool Checker Mode
+        <button className="btn btn-secondary mb-3 w-75 sidebar-button" onClick={toggleToolTrackerModal}>
+          Track Tools
         </button>
-        <button
-          className="btn btn-info mb-3 w-75 sidebar-button"
-          onClick={toggleHelpModal}
-        >
+        <button className="btn btn-info mb-3 w-75 sidebar-button" onClick={toggleHelpModal}>
           Help
         </button>
-        <button
-          className="btn btn-danger w-75 sidebar-button"
-          onClick={handleLogout}
-        >
+        <button className="btn btn-danger w-75 sidebar-button" onClick={handleLogout}>
           Log Out
         </button>
       </div>
 
+      {showHelpModal && <HelpModal onClose={toggleHelpModal} />}
 
-      {/* Help Modal */}
-      {showHelpModal && (
-        <div className="modal-overlay">
-          <div className="modal-content modal-content-help">
-            <h3 className="help-title">Help</h3>
-            <p className="help-description">example test, if you need help there are many sources that you can go to something something</p>
-            <button
-              className="btn btn-primary"
-              onClick={toggleHelpModal}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Faults Modal */}
       {showFaultsModal && (
-        <div className="modal-overlay">
-          <div className="modal-content modal-content-faults">
-            {!selectedFault ? (
-              <>
-                <h3 className="modal-title modal-title-center">Active Faults</h3>
-                <div className="fault-list-container">
-                  {faultsData.faults.map((fault) => (
-                    <div
-                      key={fault.id}
-                      className="fault-item"
-                      onClick={() => handleSelectFault(fault)}
-                    >
-                      <h5 className="fault-title">{fault.title}</h5>
-                      <p className="fault-description">{fault.description}</p>
-                    </div>
-                  ))}
-                </div>
-                <button
-                  className="btn btn-secondary w-100 modal-close-button"
-                  onClick={toggleFaultsModal}
-                >
-                  Close
-                </button>
-              </>
-            ) : (
-              <>
-                <h3 className="modal-title">{selectedFault.title}</h3>
-                <p className="modal-description">{selectedFault.description}</p>
-                <div className="fault-detail-box">
-                  <p className="fault-detail-text">{selectedFault.details}</p>
-                </div>
-                <button
-                  className="btn btn-secondary w-100 fault-back-button"
-                  onClick={handleBackToFaultsList}
-                >
-                  Back to List
-                </button>
-              </>
-            )}
-          </div>
-        </div>
+        <FaultsModal
+          faults={faultsData.faults}
+          selectedFault={selectedFault}
+          onSelectFault={handleSelectFault}
+          onBackToList={handleBackToFaultsList}
+          onClose={toggleFaultsModal}
+        />
       )}
-      {/* Report Faults Modal */}
+
+      {showToolTrackerModal && (
+        <ToolTrackerModal checkedOutTools={checkedOutTools} onClose={toggleToolTrackerModal} />
+      )}
+
+      <ScanConfirmPopup
+        confirmation={scanConfirmation}
+        onConfirm={handleConfirmToolAction}
+        onCancel={() => setScanConfirmation(null)}
+      />
+
+      {showGuideModal && (
+        <MachineryGuideModal
+          marker={activeGuideMarker}
+          stepIndex={guideStepIndex}
+          onPrevious={goToPreviousGuideStep}
+          onNext={goToNextGuideStep}
+          onClose={() => setShowGuideModal(false)}
+        />
+      )}
     </div>
   );
 };

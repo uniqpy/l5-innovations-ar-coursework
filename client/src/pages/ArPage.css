@@ -69,6 +69,12 @@ video[autoplay][muted][playsinline] {
   z-index: 10000;
 }
 
+.scan-confirm-box {
+  width: 320px;
+  max-width: calc(100% - 30px);
+  z-index: 10003;
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;
