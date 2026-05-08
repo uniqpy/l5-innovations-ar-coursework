@@ -35,7 +35,7 @@ const ArScene = (() => {
     <a-scene
       className="ar-scene"
       ref={sceneRef}
-      mindar-image="imageTargetSrc: client/src/assets/mind_markers/spanner.mind ; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes;"
+      mindar-image="imageTargetSrc: ./client/src/assets/mind_markers/spanner.mind ; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes;"
       color-space="sRGB"
       embedded
       renderer="colorManagement: true, physicallyCorrectLights"
