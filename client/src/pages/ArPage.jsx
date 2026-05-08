@@ -73,10 +73,13 @@ const ArPage = ({ onLoggedOut }) => {
   const [selectedFault, setSelectedFault] = useState(null);
   const [checkedOutToolIndexes, setCheckedOutToolIndexes] = useState([]);
   const [scanConfirmation, setScanConfirmation] = useState(null);
+  const [scanActionPrompt, setScanActionPrompt] = useState(null);
   const [showGuideModal, setShowGuideModal] = useState(false);
   const [guideMarkerIndex, setGuideMarkerIndex] = useState(null);
   const [guideStepIndex, setGuideStepIndex] = useState(0);
   const checkedOutToolIndexesRef = useRef([]);
+  const showGuideModalRef = useRef(false);
+  const scanConfirmationRef = useRef(null);
 
   const handleLogout = async () => {
     try {
@@ -95,6 +98,14 @@ const ArPage = ({ onLoggedOut }) => {
   useEffect(() => {
     checkedOutToolIndexesRef.current = checkedOutToolIndexes;
   }, [checkedOutToolIndexes]);
+
+  useEffect(() => {
+    showGuideModalRef.current = showGuideModal;
+  }, [showGuideModal]);
+
+  useEffect(() => {
+    scanConfirmationRef.current = scanConfirmation;
+  }, [scanConfirmation]);
 
   const toggleHelpModal = () => {
     setShowHelpModal((currentState) => !currentState);
@@ -121,35 +132,78 @@ const ArPage = ({ onLoggedOut }) => {
     const marker = MARKERS[targetIndex];
     if (!marker) return;
 
-    //ar marker is for logging a tool in and out. 
+    if (showGuideModalRef.current || scanConfirmationRef.current) {
+      return;
+    }
+
     if (marker.type === "tool") {
-      setShowGuideModal(false);
-      setGuideMarkerIndex(null);
-      setScanConfirmation((currentConfirmation) => {
-        if (currentConfirmation?.targetIndex === targetIndex) {
-          return currentConfirmation;
+      setScanActionPrompt((currentPrompt) => {
+        if (currentPrompt?.targetIndex === targetIndex && currentPrompt.mode === "tool") {
+          return currentPrompt;
         }
 
         const isCheckedOut = checkedOutToolIndexesRef.current.includes(targetIndex);
 
         return {
           targetIndex,
-          toolLabel: marker.label,
-          actionLabel: isCheckedOut ? "Check In" : "Check Out",
+          mode: "tool",
+          markerLabel: marker.label,
+          buttonLabel: `${isCheckedOut ? "Check In" : "Check Out"} ${marker.label}`,
         };
       });
       return;
     }
-    //else we show the modal for fixing a fault.
-    setScanConfirmation(null);
-    setGuideMarkerIndex(targetIndex);
-    setGuideStepIndex(0);
-    setShowGuideModal(true);
+
+    setScanActionPrompt((currentPrompt) => {
+      if (currentPrompt?.targetIndex === targetIndex && currentPrompt.mode === "guide") {
+        return currentPrompt;
+      }
+
+      return {
+        targetIndex,
+        mode: "guide",
+        markerLabel: marker.label,
+        buttonLabel: `Open ${marker.label} Guide`,
+      };
+    });
   }, []);
 
-  const handleTargetLost = useCallback(() => {
-    // No action needed on marker loss for this flow.
+  const handleTargetLost = useCallback((targetIndex) => {
+    setScanActionPrompt((currentPrompt) => {
+      if (!currentPrompt) return currentPrompt;
+      if (currentPrompt.targetIndex !== targetIndex) return currentPrompt;
+      return null;
+    });
   }, []);
+
+  const handleOpenScanAction = () => {
+    if (!scanActionPrompt) return;
+
+    const marker = MARKERS[scanActionPrompt.targetIndex];
+    if (!marker) {
+      setScanActionPrompt(null);
+      return;
+    }
+
+    if (scanActionPrompt.mode === "tool") {
+      const isCheckedOut = checkedOutToolIndexesRef.current.includes(scanActionPrompt.targetIndex);
+      setShowGuideModal(false);
+      setGuideMarkerIndex(null);
+      setScanConfirmation({
+        targetIndex: scanActionPrompt.targetIndex,
+        toolLabel: marker.label,
+        actionLabel: isCheckedOut ? "Check In" : "Check Out",
+      });
+      setScanActionPrompt(null);
+      return;
+    }
+
+    setScanConfirmation(null);
+    setGuideMarkerIndex(scanActionPrompt.targetIndex);
+    setGuideStepIndex(0);
+    setShowGuideModal(true);
+    setScanActionPrompt(null);
+  };
 
   //check to make sure user meant to scan that tool, if so add to list of tools that are tracked.
   const handleConfirmToolAction = () => {
@@ -230,6 +284,14 @@ const ArPage = ({ onLoggedOut }) => {
         onConfirm={handleConfirmToolAction}
         onCancel={() => setScanConfirmation(null)}
       />
+
+      {scanActionPrompt && (
+        <div className="scan-action-toast">
+          <button className="btn btn-dark scan-action-trigger" onClick={handleOpenScanAction}>
+            {scanActionPrompt.buttonLabel}
+          </button>
+        </div>
+      )}
 
       {showGuideModal && (
         <RepairGuideModal

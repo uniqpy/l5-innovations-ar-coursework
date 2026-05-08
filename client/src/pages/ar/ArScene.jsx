@@ -87,15 +87,12 @@ const ArScene = ({ onTargetFound: ArMarkerFound, onTargetLost: ArMarkerLost }) =
           }}
           mindar-image-target={`targetIndex: ${index}`}
         >
-          <a-box
-            position="0 0 0.08"
-            rotation="0 0 0"
-            width="0.55"
-            height="0.35"
-            depth="0.12"
-            color="#17c3b2"
-            material="metalness: 0.2; roughness: 0.5; opacity: 0.9; transparent: true"
-          ></a-box>
+          <a-entity position="0 0 0.08" rotation="0 0 0">
+            <a-entity line="start: -0.275 0.175 0; end: 0.275 0.175 0; color: #17c3b2"></a-entity>
+            <a-entity line="start: 0.275 0.175 0; end: 0.275 -0.175 0; color: #17c3b2"></a-entity>
+            <a-entity line="start: 0.275 -0.175 0; end: -0.275 -0.175 0; color: #17c3b2"></a-entity>
+            <a-entity line="start: -0.275 -0.175 0; end: -0.275 0.175 0; color: #17c3b2"></a-entity>
+          </a-entity>
           <a-text
             value={marker.label}
             position="0 0.32 0.08"

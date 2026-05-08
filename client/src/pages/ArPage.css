@@ -108,6 +108,23 @@ video[autoplay][muted][playsinline] {
   z-index: 10003;
 }
 
+.scan-action-toast {
+  position: fixed;
+  right: 14px;
+  bottom: 92px;
+  z-index: 10003;
+}
+
+.scan-action-trigger {
+  border-radius: 999px;
+  padding: 0.45rem 0.8rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.1;
+  white-space: nowrap;
+  box-shadow: 0 8px 18px rgba(8, 14, 24, 0.34);
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -237,5 +254,15 @@ video[autoplay][muted][playsinline] {
 
   .taskbar-label {
     display: none;
+  }
+
+  .scan-action-toast {
+    right: 10px;
+    bottom: 80px;
+  }
+
+  .scan-action-trigger {
+    padding: 0.42rem 0.72rem;
+    font-size: 0.76rem;
   }
 }
