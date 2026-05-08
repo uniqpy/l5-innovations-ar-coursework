@@ -9,10 +9,11 @@ import HelpModal from "./ar/HelpModal";
 import FaultsModal from "./ar/FaultsModal";
 import ToolTrackerModal from "./ar/ToolTrackerModal";
 import ScanConfirmPopup from "./ar/ScanConfirmPopup";
-import MachineryGuideModal from "./ar/MachineryGuideModal";
+import RepairGuideModal from "./ar/RepairGuideModal";
 import { MARKERS } from "./ar/markers";
 
 const ArPage = () => {
+  // Declare all our variables used to load modals/other elements.
   const navigate = useNavigate();
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showFaultsModal, setShowFaultsModal] = useState(false);
@@ -55,7 +56,7 @@ const ArPage = () => {
     setSelectedFault(null);
   };
 
-  const handleTargetFound = useCallback((targetIndex) => {
+  const handleArTargetFound = useCallback((targetIndex) => {
     const marker = MARKERS[targetIndex];
     if (!marker) return;
 
@@ -121,11 +122,11 @@ const ArPage = () => {
 
   return (
     <div className="ar-page-container" style={{ display: "flex", height: "100vh" }}>
-      <ArScene onTargetFound={handleTargetFound} onTargetLost={handleTargetLost} />
+      <ArScene onTargetFound={handleArTargetFound} onTargetLost={handleTargetLost} />
 
       <div className="ar-sidebar">
         <button className="btn btn-primary mb-3 w-75 sidebar-button" onClick={toggleFaultsModal}>
-          View All Active Faults
+          View Active Faults
         </button>
         <button className="btn btn-secondary mb-3 w-75 sidebar-button" onClick={toggleToolTrackerModal}>
           Track Tools
@@ -161,7 +162,7 @@ const ArPage = () => {
       />
 
       {showGuideModal && (
-        <MachineryGuideModal
+        <RepairGuideModal
           marker={activeGuideMarker}
           stepIndex={guideStepIndex}
           onPrevious={goToPreviousGuideStep}

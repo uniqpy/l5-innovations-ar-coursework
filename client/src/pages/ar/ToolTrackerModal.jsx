@@ -6,7 +6,7 @@ const ToolTrackerModal = ({ checkedOutTools, onClose }) => {
       <div className="modal-content modal-content-faults">
         <h3 className="modal-title modal-title-center">Checked Out Tools</h3>
         <p className="modal-description">
-          Scan a tool QR code to check it in or out. Non-tool markers open machine guides.
+          Scan a tool QR code to check it in or out.
         </p>
         {checkedOutTools.length === 0 ? (
           <p className="fault-description">No tools are currently checked out.</p>
