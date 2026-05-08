@@ -4,6 +4,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import faultsData from '../data/faults.json';
 import './ArPage.css';
+import TargetSrc from '../assets/mind_markers/qr_code_markers.mind?url';
 
 
 const ArScene = (() => {
@@ -13,17 +14,20 @@ const ArScene = (() => {
     const sceneEl = sceneRef.current;
     if (!sceneEl) return undefined;
 
-    const onRenderStart = () => {
-      const arSystem = sceneEl.systems["mindar-image-system"];
-      if (arSystem) {
-        arSystem.start();
-      }
+    const onArReady = () => {
+      console.info("MindAR ready");
     };
 
-    sceneEl.addEventListener("renderstart", onRenderStart);
+    const onArError = (event) => {
+      console.error("MindAR error", event?.detail);
+    };
+
+    sceneEl.addEventListener("arReady", onArReady);
+    sceneEl.addEventListener("arError", onArError);
 
     return () => {
-      sceneEl.removeEventListener("renderstart", onRenderStart);
+      sceneEl.removeEventListener("arReady", onArReady);
+      sceneEl.removeEventListener("arError", onArError);
       const arSystem = sceneEl.systems["mindar-image-system"];
       if (arSystem) {
         arSystem.stop();
@@ -35,44 +39,73 @@ const ArScene = (() => {
     <a-scene
       className="ar-scene"
       ref={sceneRef}
-      mindar-image="imageTargetSrc: ./client/src/assets/mind_markers/spanner.mind ; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes;"
+      mindar-image={`imageTargetSrc: ${TargetSrc}; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: no;`}
       color-space="sRGB"
       embedded
       renderer="colorManagement: true, physicallyCorrectLights"
       vr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: false"
     >
-      <a-assets>
-        <a-asset-item
-          id="raccoonModel"
-          src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/band-example/raccoon/scene.gltf"
-        ></a-asset-item>
-        <a-asset-item
-          id="bearModel"
-          src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/band-example/bear/scene.gltf"
-        ></a-asset-item>
-      </a-assets>
-
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
       <a-entity mindar-image-target="targetIndex: 0">
-        <a-gltf-model
+        <a-box
+          position="0 0 0.08"
           rotation="0 0 0"
-          position="0 -0.25 0"
-          scale="0.05 0.05 0.05"
-          src="#raccoonModel"
-          animation-mixer
-        ></a-gltf-model>
+          width="0.55"
+          height="0.35"
+          depth="0.12"
+          color="#17c3b2"
+          material="metalness: 0.2; roughness: 0.5; opacity: 0.9; transparent: true"
+        ></a-box>
+        <a-text
+          value="Spanner-01"
+          position="0 0.32 0.08"
+          align="center"
+          color="#ffd166"
+          width="1.6"
+          shader="msdf"
+        ></a-text>
       </a-entity>
 
       <a-entity mindar-image-target="targetIndex: 1">
-        <a-gltf-model
+        <a-box
+          position="0 0 0.08"
           rotation="0 0 0"
-          position="0 -0.25 0"
-          scale="0.05 0.05 0.05"
-          src="#bearModel"
-          animation-mixer
-        ></a-gltf-model>
+          width="0.55"
+          height="0.35"
+          depth="0.12"
+          color="#17c3b2"
+          material="metalness: 0.2; roughness: 0.5; opacity: 0.9; transparent: true"
+        ></a-box>
+        <a-text
+          value="Screwdriver-01 "
+          position="0 0.32 0.08"
+          align="center"
+          color="#ffd166"
+          width="1.6"
+          shader="msdf"
+        ></a-text>
+      </a-entity>
+
+      <a-entity mindar-image-target="targetIndex: 2">
+        <a-box
+          position="0 0 0.08"
+          rotation="0 0 0"
+          width="0.55"
+          height="0.35"
+          depth="0.12"
+          color="#17c3b2"
+          material="metalness: 0.2; roughness: 0.5; opacity: 0.9; transparent: true"
+        ></a-box>
+        <a-text
+          value="Electric Box-01"
+          position="0 0.32 0.08"
+          align="center"
+          color="#ffd166"
+          width="1.6"
+          shader="msdf"
+        ></a-text>
       </a-entity>
     </a-scene>
   );
