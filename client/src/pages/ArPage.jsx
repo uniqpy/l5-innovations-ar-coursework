@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import PropTypes from "prop-types";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import faultsData from "../data/faults.json";
@@ -11,8 +12,9 @@ import ToolTrackerModal from "./ar/ToolTrackerModal";
 import ScanConfirmPopup from "./ar/ScanConfirmPopup";
 import RepairGuideModal from "./ar/RepairGuideModal";
 import { MARKERS } from "./ar/markers";
+import { API_BASE_URL } from "../config/api";
 
-const ArPage = () => {
+const ArPage = ({ onLoggedOut }) => {
   // Declare all our variables used to load modals/other elements.
   const navigate = useNavigate();
   const [showHelpModal, setShowHelpModal] = useState(false);
@@ -26,10 +28,18 @@ const ArPage = () => {
   const [guideStepIndex, setGuideStepIndex] = useState(0);
   const checkedOutToolIndexesRef = useRef([]);
 
-  //remove the token that allows access to Ar page.
-  const handleLogout = () => {
-    sessionStorage.removeItem("token");
-    navigate("/LogInPage");
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_BASE_URL}/api/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Logout request failed:", error);
+    } finally {
+      onLoggedOut();
+      navigate("/LogInPage", { replace: true });
+    }
   };
 
   useEffect(() => {
@@ -179,3 +189,7 @@ const ArPage = () => {
 };
 
 export default ArPage;
+
+ArPage.propTypes = {
+  onLoggedOut: PropTypes.func.isRequired,
+};

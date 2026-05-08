@@ -1,80 +1,107 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
-import 'bootstrap/dist/css/bootstrap.min.css';
+import "bootstrap/dist/css/bootstrap.min.css";
+import "./LogInPage.css";
+import { API_BASE_URL } from "../config/api";
 
-
-
-
-const LoginPage = ({ setToken }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+const LoginPage = ({ isAuthenticated, onLoginSuccess }) => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async e => {
-    e.preventDefault();
-    setError('');
-    //send our username and password to server. 
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/ArPage", { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    setError("");
+
     try {
-      const response = await fetch("http://localhost:8080/LogInPage", {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: "POST",
         headers: {
-          "Content-Type" : "application/json"
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password })
+        credentials: "include",
+        body: JSON.stringify({ email, password }),
       });
-      //we got the wrong username password pair
+
       if (!response.ok) {
-        const errorData = await response.json();
-        setError(errorData.error || "Login failed");
+        const errorData = await response.json().catch(() => ({ error: "Login failed." }));
+        setError(errorData.error || "Login failed.");
         return;
       }
-      //we got the right username password pair and now we have been given a token we can use to access the ar page.
-      const data = await response.json();
-      setToken(data);
-      navigate("/ArPage");
+
+      onLoginSuccess();
+      navigate("/ArPage", { replace: true });
     } catch (err) {
-      setError("Server error. Please try again.");
+      setError("Unable to reach server. Please try again.");
       console.error(err);
+    } finally {
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
-    <div className="d-flex align-items-center justify-content-center vh-100 bg-light">
-      <div className="card shadow p-4" style={{ maxWidth: '400px', width: '100%' }}>
-        <h2 className="text-center mb-4">AR Maintaince Tool Log In</h2>
-        {error && <div className="alert alert-danger" role="alert">{error}</div>}
-        <form onSubmit={handleSubmit}>
-          <div className="form-floating mb-3">
-            <input
-              type="email"
-              className="form-control"
-              id="floatingEmail"
-              placeholder="name@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            <label htmlFor="floatingEmail">Email address</label>
-          </div>
+    <div className="login-page">
+      <div className="card login-card border-0 shadow-sm">
+        <div className="card-body p-4 p-md-5">
+          <p className="login-brand mb-2">AR Maintenance</p>
+          <h1 className="login-title mb-2">Sign In</h1>
+          {error && (
+            <div className="alert alert-danger py-2" role="alert">
+              {error}
+            </div>
+          )}
 
-          <div className="form-floating mb-3">
-            <input
-              type="password"
-              className="form-control"
-              id="floatingPassword"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            <label htmlFor="floatingPassword">Password</label>
-          </div>
-          <button className="btn btn-primary w-100" type="submit">
-            Sign In
-          </button>
-        </form>
+          <form onSubmit={handleSubmit}>
+            <div className="mb-3">
+              <label className="form-label login-label" htmlFor="emailAddress">
+                Email Address
+              </label>
+              <input
+                id="emailAddress"
+                type="email"
+                autoComplete="username"
+                className="form-control login-input"
+                placeholder="you@company.com"
+                value={email}
+                onChange={(inputEvent) => setEmail(inputEvent.target.value)}
+                required
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="form-label login-label" htmlFor="accountPassword">
+                Password
+              </label>
+              <input
+                id="accountPassword"
+                type="password"
+                autoComplete="current-password"
+                className="form-control login-input"
+                placeholder="Enter password"
+                value={password}
+                onChange={(inputEvent) => setPassword(inputEvent.target.value)}
+                required
+              />
+            </div>
+
+            <button className="btn login-submit w-100" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Signing In..." : "Sign In"}
+            </button>
+          </form>
+
+        </div>
       </div>
     </div>
   );
@@ -83,5 +110,6 @@ const LoginPage = ({ setToken }) => {
 export default LoginPage;
 
 LoginPage.propTypes = {
-  setToken: PropTypes.func.isRequired
+  isAuthenticated: PropTypes.bool.isRequired,
+  onLoginSuccess: PropTypes.func.isRequired,
 };
