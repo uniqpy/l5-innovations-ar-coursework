@@ -2,17 +2,21 @@ import React, { useEffect, useRef } from "react";
 import TargetSrc from "../../assets/mind_markers/targets.mind?url";
 import { MARKERS } from "./markers";
 
+// Main AR scene wrapper that connects MindAR events to React callbacks.
 const ArScene = ({ ArMarkerFound, ArMarkerLost }) => {
+  // Refs used for scene access, tracked marker entities, and stable callback references.
   const sceneRef = useRef(null);
   const targetRefs = useRef([]);
   const ArMarkerFoundRef = useRef(ArMarkerFound);
   const ArMarkerLostRef = useRef(ArMarkerLost);
 
+  // Keep callback refs in sync so listeners always call the latest handlers.
   useEffect(() => {
     ArMarkerFoundRef.current = ArMarkerFound;
     ArMarkerLostRef.current = ArMarkerLost;
   }, [ArMarkerFound, ArMarkerLost]);
 
+  // Register global AR listeners and target found/lost listeners.
   useEffect(() => {
     const sceneEl = sceneRef.current;
     if (!sceneEl) return undefined;
@@ -48,6 +52,7 @@ const ArScene = ({ ArMarkerFound, ArMarkerLost }) => {
       };
     });
 
+    // Cleanup AR listeners.
     return () => {
       sceneEl.removeEventListener("arReady", onArReady);
       sceneEl.removeEventListener("arError", onArError);
@@ -59,6 +64,7 @@ const ArScene = ({ ArMarkerFound, ArMarkerLost }) => {
     };
   }, []);
 
+  // MindAR scene.
   return (
     <a-scene
       className="ar-scene"
@@ -73,6 +79,7 @@ const ArScene = ({ ArMarkerFound, ArMarkerLost }) => {
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
       {MARKERS.map((marker, index) => (
+        // Create one tracked AR entity per marker
         <a-entity
           key={`${marker.label}-${index}`}
           ref={(el) => {
