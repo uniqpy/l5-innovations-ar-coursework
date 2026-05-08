@@ -4,8 +4,6 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import faultsData from '../data/faults.json';
 import './ArPage.css';
-import spannerTargetSrc from '../assets/mind_markers/spanner.mind?url';
-import spannerImageSrc from '../assets/mind_markers/spanner.png';
 
 
 const ArScene = (() => {
@@ -37,7 +35,7 @@ const ArScene = (() => {
     <a-scene
       className="ar-scene"
       ref={sceneRef}
-      mindar-image={`imageTargetSrc: ${spannerTargetSrc}; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes;`}
+      mindar-image="imageTargetSrc: client/src/assets/mind_markers/spanner.mind ; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes;"
       color-space="sRGB"
       embedded
       renderer="colorManagement: true, physicallyCorrectLights"
@@ -45,29 +43,36 @@ const ArScene = (() => {
       device-orientation-permission-ui="enabled: false"
     >
       <a-assets>
-        <img id="spannerImage" src={spannerImageSrc} />
+        <a-asset-item
+          id="raccoonModel"
+          src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/band-example/raccoon/scene.gltf"
+        ></a-asset-item>
+        <a-asset-item
+          id="bearModel"
+          src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/band-example/bear/scene.gltf"
+        ></a-asset-item>
       </a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
       <a-entity mindar-image-target="targetIndex: 0">
-        <a-plane
-          src="#spannerImage"
-          position="0 0 0"
+        <a-gltf-model
           rotation="0 0 0"
-          width="1"
-          height="0.6"
-        ></a-plane>
-        <a-box
+          position="0 -0.25 0"
+          scale="0.05 0.05 0.05"
+          src="#raccoonModel"
+          animation-mixer
+        ></a-gltf-model>
+      </a-entity>
+
+      <a-entity mindar-image-target="targetIndex: 1">
+        <a-gltf-model
           rotation="0 0 0"
-          position="0 0 0.12"
-          width="0.5"
-          height="0.3"
-          depth="0.05"
-          color="#00d4ff"
-          opacity="0.5"
-          material="transparent: true"
-        ></a-box>
+          position="0 -0.25 0"
+          scale="0.05 0.05 0.05"
+          src="#bearModel"
+          animation-mixer
+        ></a-gltf-model>
       </a-entity>
     </a-scene>
   );
