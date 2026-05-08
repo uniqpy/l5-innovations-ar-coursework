@@ -21,10 +21,13 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  z-index: 1 !important;
 }
 
-#arjs-video {
-  z-index: 0 !important;
+.ar-scene .a-canvas,
+.ar-scene video,
+.ar-scene canvas {
+  z-index: 1 !important;
 }
 
 

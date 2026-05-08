@@ -32,6 +32,7 @@ const ArScene = (() => {
 
   return (
     <a-scene
+      className="ar-scene"
       ref={sceneRef}
       mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/band-example/band.mind; autoStart: false; uiLoading: no; uiError: no; uiScanning: no;"
       color-space="sRGB"
