@@ -39,7 +39,7 @@ const ArScene = (() => {
     <a-scene
       className="ar-scene"
       ref={sceneRef}
-      mindar-image={`imageTargetSrc: ${TargetSrc}; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: no;`}
+      mindar-image={`imageTargetSrc: ${TargetSrc}; maxTrack: 3; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: no;`}
       color-space="sRGB"
       embedded
       renderer="colorManagement: true, physicallyCorrectLights"
@@ -59,7 +59,7 @@ const ArScene = (() => {
           material="metalness: 0.2; roughness: 0.5; opacity: 0.9; transparent: true"
         ></a-box>
         <a-text
-          value="Spanner-01"
+          value="Spanner"
           position="0 0.32 0.08"
           align="center"
           color="#ffd166"
@@ -79,7 +79,7 @@ const ArScene = (() => {
           material="metalness: 0.2; roughness: 0.5; opacity: 0.9; transparent: true"
         ></a-box>
         <a-text
-          value="Screwdriver-01 "
+          value="Screwdriver "
           position="0 0.32 0.08"
           align="center"
           color="#ffd166"
@@ -99,7 +99,7 @@ const ArScene = (() => {
           material="metalness: 0.2; roughness: 0.5; opacity: 0.9; transparent: true"
         ></a-box>
         <a-text
-          value="Electric Box-01"
+          value="Electric Box"
           position="0 0.32 0.08"
           align="center"
           color="#ffd166"
