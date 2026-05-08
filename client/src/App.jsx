@@ -1,35 +1,32 @@
-import { useState } from 'react'
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import LogInPage from './pages/LogInPage.jsx';
 import ArPage from './pages/ArPage.jsx';
 import ProtectedRoute from './pages/ProtectedRoute.jsx';
-import './App.css'
+import MindARDentPage from './pages/MindARDentPage.jsx';
+import './App.css';
 import useToken from './useToken.jsx';
 
-function setToken(userToken) {
- sessionStorage.setItem("token", JSON.stringify(userToken));
-}
-
-
-//load different parts of site, we will begin on the LogInPage
+// Load different parts of site.
 export default function App() {
   const { token, setToken } = useToken();
 
-  if (!token) {
-    return <LogInPage setToken={setToken} />
-  }
   return (
-   <Routes>
-    <Route path ="/LogInPage" element={<LogInPage setToken={setToken} />} />
-    <Route
-      path="/ArPage"
-      element={
-        <ProtectedRoute token = {token}>
-          <ArPage/>
-        </ProtectedRoute>
-      }
-   />
-  </Routes>
+    <Routes>
+      <Route
+        path="/"
+        element={token ? <Navigate to="/ArPage" replace /> : <LogInPage setToken={setToken} />}
+      />
+      <Route path="/LogInPage" element={<LogInPage setToken={setToken} />} />
+      <Route path="/dent-demo" element={<MindARDentPage />} />
+      <Route
+        path="/ArPage"
+        element={
+          <ProtectedRoute token={token}>
+            <ArPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
-

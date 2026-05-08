@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import PropTypes from "prop-types";
+import PropTypes from 'prop-types';
 import 'bootstrap/dist/css/bootstrap.min.css';
-
-
-
 
 const LoginPage = ({ setToken }) => {
   const [email, setEmail] = useState('');
@@ -12,38 +9,42 @@ const LoginPage = ({ setToken }) => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     try {
-      const response = await fetch("http://localhost:8080/LogInPage", {
-        method: "POST",
+      const response = await fetch('http://localhost:8080/LogInPage', {
+        method: 'POST',
         headers: {
-          "Content-Type" : "application/json"
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        setError(errorData.error || "Login failed");
+        setError(errorData.error || 'Login failed');
         return;
       }
 
       const data = await response.json();
       setToken(data);
-      navigate("/ArPage");
+      navigate('/ArPage');
     } catch (err) {
-      setError("Server error. Please try again.");
+      setError('Server error. Please try again.');
       console.error(err);
     }
-  }
+  };
 
   return (
     <div className="d-flex align-items-center justify-content-center vh-100 bg-light">
-      <div className="card shadow p-4" style={{ maxWidth: '400px', width: '100%' }}>
+      <div className="card shadow p-4" style={{ maxWidth: '420px', width: '100%' }}>
         <h2 className="text-center mb-4">AR Maintaince Tool Log In</h2>
-        {error && <div className="alert alert-danger" role="alert">{error}</div>}
+        {error && (
+          <div className="alert alert-danger" role="alert">
+            {error}
+          </div>
+        )}
         <form onSubmit={handleSubmit}>
           <div className="form-floating mb-3">
             <input
@@ -74,6 +75,14 @@ const LoginPage = ({ setToken }) => {
             Sign In
           </button>
         </form>
+
+        <button
+          className="btn btn-outline-secondary w-100 mt-3"
+          type="button"
+          onClick={() => navigate('/dent-demo')}
+        >
+          Open Public AR Demo
+        </button>
       </div>
     </div>
   );
@@ -82,5 +91,5 @@ const LoginPage = ({ setToken }) => {
 export default LoginPage;
 
 LoginPage.propTypes = {
-  setToken: PropTypes.func.isRequired
+  setToken: PropTypes.func.isRequired,
 };

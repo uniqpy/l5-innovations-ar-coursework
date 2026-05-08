@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <rect width="1024" height="1024" fill="#f7f7f7" />
+  <rect x="60" y="60" width="904" height="904" fill="none" stroke="#111111" stroke-width="24" />
+  <g fill="#111111" font-family="Arial, sans-serif" text-anchor="middle">
+    <text x="512" y="360" font-size="120" font-weight="700">EQUIPMENT TAG</text>
+    <text x="512" y="580" font-size="260" font-weight="900" letter-spacing="18">DENT</text>
+    <text x="512" y="760" font-size="84" font-weight="600">REF: PIPE-03</text>
+  </g>
+  <g stroke="#111111" stroke-width="10">
+    <line x1="180" y1="180" x2="300" y2="300" />
+    <line x1="844" y1="180" x2="724" y2="300" />
+    <line x1="180" y1="844" x2="300" y2="724" />
+    <line x1="844" y1="844" x2="724" y2="724" />
+  </g>
+</svg>
