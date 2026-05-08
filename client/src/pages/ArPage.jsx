@@ -14,6 +14,56 @@ import RepairGuideModal from "./ar/RepairGuideModal";
 import { MARKERS } from "./ar/markers";
 import { API_BASE_URL } from "../config/api";
 
+const FeatherIcon = ({ name }) => {
+  const sharedProps = {
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "2",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+  };
+
+  if (name === "alert-triangle") {
+    return (
+      <svg className="taskbar-icon" viewBox="0 0 24 24" aria-hidden="true" {...sharedProps}>
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+        <line x1="12" y1="9" x2="12" y2="13"></line>
+        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+      </svg>
+    );
+  }
+
+  if (name === "tool") {
+    return (
+      <svg className="taskbar-icon" viewBox="0 0 24 24" aria-hidden="true" {...sharedProps}>
+        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2 2 0 1 1-2.83-2.83l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+      </svg>
+    );
+  }
+
+  if (name === "help-circle") {
+    return (
+      <svg className="taskbar-icon" viewBox="0 0 24 24" aria-hidden="true" {...sharedProps}>
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+      </svg>
+    );
+  }
+
+  if (name === "log-out") {
+    return (
+      <svg className="taskbar-icon" viewBox="0 0 24 24" aria-hidden="true" {...sharedProps}>
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+        <polyline points="16 17 21 12 16 7"></polyline>
+        <line x1="21" y1="12" x2="9" y2="12"></line>
+      </svg>
+    );
+  }
+
+  return null;
+};
+
 const ArPage = ({ onLoggedOut }) => {
   // Declare all our variables used to load modals/other elements.
   const navigate = useNavigate();
@@ -136,20 +186,26 @@ const ArPage = ({ onLoggedOut }) => {
 
   return (
     <div className="ar-page-container" style={{ display: "flex", height: "100vh" }}>
-      <ArScene onTargetFound={handleArTargetFound} onTargetLost={handleTargetLost} />
+      <div className="card ar-scene-card border-0 shadow-lg">
+        <ArScene onTargetFound={handleArTargetFound} onTargetLost={handleTargetLost} />
+      </div>
 
-      <div className="ar-sidebar">
-        <button className="btn btn-primary mb-3 w-75 sidebar-button" onClick={toggleFaultsModal}>
-          View Active Faults
+      <div className="ar-taskbar" role="toolbar" aria-label="AR actions">
+        <button className="btn btn-primary taskbar-button" onClick={toggleFaultsModal}>
+          <FeatherIcon name="alert-triangle" />
+          <span className="taskbar-label">Active Faults</span>
         </button>
-        <button className="btn btn-secondary mb-3 w-75 sidebar-button" onClick={toggleToolTrackerModal}>
-          Track Tools
+        <button className="btn btn-secondary taskbar-button" onClick={toggleToolTrackerModal}>
+          <FeatherIcon name="tool" />
+          <span className="taskbar-label">Track Tools</span>
         </button>
-        <button className="btn btn-info mb-3 w-75 sidebar-button" onClick={toggleHelpModal}>
-          Help
+        <button className="btn btn-info taskbar-button" onClick={toggleHelpModal}>
+          <FeatherIcon name="help-circle" />
+          <span className="taskbar-label">Help</span>
         </button>
-        <button className="btn btn-danger w-75 sidebar-button" onClick={handleLogout}>
-          Log Out
+        <button className="btn btn-danger taskbar-button" onClick={handleLogout}>
+          <FeatherIcon name="log-out" />
+          <span className="taskbar-label">Log Out</span>
         </button>
       </div>
 
