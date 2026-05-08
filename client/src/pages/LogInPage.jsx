@@ -15,6 +15,7 @@ const LoginPage = ({ setToken }) => {
   const handleSubmit = async e => {
     e.preventDefault();
     setError('');
+    //send our username and password to server. 
     try {
       const response = await fetch("http://localhost:8080/LogInPage", {
         method: "POST",
@@ -23,13 +24,13 @@ const LoginPage = ({ setToken }) => {
         },
         body: JSON.stringify({ email, password })
       });
-
+      //we got the wrong username password pair
       if (!response.ok) {
         const errorData = await response.json();
         setError(errorData.error || "Login failed");
         return;
       }
-
+      //we got the right username password pair and now we have been given a token we can use to access the ar page.
       const data = await response.json();
       setToken(data);
       navigate("/ArPage");

@@ -1,6 +1,6 @@
 import React from "react";
 
-const MachineryGuideModal = ({ ArMarker, stepIndex, onPrevious, onNext, onClose }) => {
+const RepairGuideModal = ({ ArMarker, stepIndex, onPrevious, onNext, onClose }) => {
   if (!ArMarker || !ArMarker.guideSteps || ArMarker.guideSteps.length === 0) return null;
 
   return (
@@ -27,4 +27,4 @@ const MachineryGuideModal = ({ ArMarker, stepIndex, onPrevious, onNext, onClose 
   );
 };
 
-export default MachineryGuideModal;
+export default RepairGuideModal;

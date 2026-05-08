@@ -26,6 +26,7 @@ const ArPage = () => {
   const [guideStepIndex, setGuideStepIndex] = useState(0);
   const checkedOutToolIndexesRef = useRef([]);
 
+  //remove the token that allows access to Ar page.
   const handleLogout = () => {
     sessionStorage.removeItem("token");
     navigate("/LogInPage");
@@ -60,6 +61,7 @@ const ArPage = () => {
     const marker = MARKERS[targetIndex];
     if (!marker) return;
 
+    //ar marker is for logging a tool in and out. 
     if (marker.type === "tool") {
       setShowGuideModal(false);
       setGuideMarkerIndex(null);
@@ -78,7 +80,7 @@ const ArPage = () => {
       });
       return;
     }
-
+    //else we show the modal for fixing a fault.
     setScanConfirmation(null);
     setGuideMarkerIndex(targetIndex);
     setGuideStepIndex(0);
@@ -89,6 +91,7 @@ const ArPage = () => {
     // No action needed on marker loss for this flow.
   }, []);
 
+  //check to make sure user meant to scan that tool, if so add to list of tools that are tracked.
   const handleConfirmToolAction = () => {
     if (!scanConfirmation) return;
     const { targetIndex } = scanConfirmation;
@@ -107,6 +110,7 @@ const ArPage = () => {
     .map((index) => MARKERS[index]?.label || `Marker ${index}`)
     .sort((a, b) => a.localeCompare(b));
 
+  //repair guide logic.
   const activeGuideMarker = guideMarkerIndex !== null ? MARKERS[guideMarkerIndex] : null;
   const guideSteps = activeGuideMarker?.guideSteps || [];
 
