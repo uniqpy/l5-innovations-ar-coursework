@@ -840,7 +840,7 @@ async function handleToolScanAction(req, res, action) {
 
   const tool = tools[0];
   if (!tool) {
-    res.status(404).json({ error: "Tool not found for scanned QR code." });
+    res.status(404).json({ error: "Tool not found for scanned marker code." });
     return;
   }
 
@@ -879,7 +879,7 @@ async function handleToolScanAction(req, res, action) {
   await dbPool.query(
     `INSERT INTO tool_check_out (tool_id, user_id, action, action_at, notes)
      VALUES (?, ?, ?, UTC_TIMESTAMP(), ?)`,
-    [tool.id, req.auth.userId, action, `Tool scan ${actionVerb} via AR QR.`],
+    [tool.id, req.auth.userId, action, `Tool scan ${actionVerb} via AR marker.`],
   );
 
   const refreshedRows = await dbPool.query(

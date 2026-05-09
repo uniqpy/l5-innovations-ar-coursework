@@ -15,6 +15,8 @@ import { MARKERS } from "./ar/markers";
 import { API_BASE_URL } from "../config/api";
 
 const TARGET_LOST_PROMPT_BUFFER_MS = 1000;
+const getToolMarkerCode = (item) => item?.markerCode || item?.qrCode || null;
+const getFaultMarkerCode = (item) => item?.assetFaultMarkerCode || item?.assetFaultQrCode || null;
 
 const FeatherIcon = ({ name }) => {
   const sharedProps = {
@@ -129,7 +131,7 @@ const ArPage = ({ onLoggedOut }) => {
     const normalizedTools = Array.isArray(responseData.tools)
       ? responseData.tools.map((tool) => ({
           ...tool,
-          markerCode: tool.markerCode || null,
+          markerCode: getToolMarkerCode(tool),
         }))
       : [];
     setTools(normalizedTools);
@@ -152,8 +154,9 @@ const ArPage = ({ onLoggedOut }) => {
   useEffect(() => {
     const nextByMarker = {};
     tools.forEach((tool) => {
-      if (tool.markerCode) {
-        nextByMarker[tool.markerCode] = tool;
+      const markerCode = getToolMarkerCode(tool);
+      if (markerCode) {
+        nextByMarker[markerCode] = tool;
       }
     });
     toolsByMarkerRef.current = nextByMarker;
@@ -240,7 +243,7 @@ const ArPage = ({ onLoggedOut }) => {
     const reportMarker = reportMarkerIndex !== null ? MARKERS[reportMarkerIndex] : null;
     const selectedFaultType = faultTypes.find((faultType) => faultType.name === reportInput.typeOfFault);
 
-    if (!selectedFaultType && !reportMarker?.assetFaultMarkerCode) {
+    if (!selectedFaultType && !getFaultMarkerCode(reportMarker)) {
       throw new Error("Select a known fault type or scan a registered fault marker.");
     }
 
@@ -251,11 +254,12 @@ const ArPage = ({ onLoggedOut }) => {
     ].filter(Boolean);
 
     const responseData = await apiRequest("/api/reportfault", "POST", {
+      assetFaultMarkerCode: getFaultMarkerCode(reportMarker),
+      assetFaultQrCode: getFaultMarkerCode(reportMarker),
       faultTypeId: selectedFaultType?.id || null,
       faultTypeName: reportInput.typeOfFault,
       assetId: reportMarker?.assetId || null,
       assetLabel: reportInput.location || reportInput.faultyPart || reportMarker?.label || "",
-      assetFaultMarkerCode: reportMarker?.assetFaultMarkerCode || null,
       urgency: reportInput.urgency,
       notes: notesSegments.join(" | "),
     });
@@ -288,7 +292,8 @@ const ArPage = ({ onLoggedOut }) => {
     }
 
     if (marker.type === "tool") {
-      const toolStatus = marker.markerCode ? toolsByMarkerRef.current[marker.markerCode] : null;
+      const scannedToolMarkerCode = getToolMarkerCode(marker);
+      const toolStatus = scannedToolMarkerCode ? toolsByMarkerRef.current[scannedToolMarkerCode] : null;
       const isCheckedOut = Boolean(toolStatus?.isCheckedOut);
 
       setScanActionPrompt({
@@ -333,13 +338,14 @@ const ArPage = ({ onLoggedOut }) => {
     }
 
     if (scanActionPrompt.mode === "tool") {
-      if (!marker.markerCode) {
+      const scannedToolMarkerCode = getToolMarkerCode(marker);
+      if (!scannedToolMarkerCode) {
         setFaultReportNotice("This tool marker has no marker mapping.");
         setScanActionPrompt(null);
         return;
       }
 
-      const currentTool = toolsByMarkerRef.current[marker.markerCode];
+      const currentTool = toolsByMarkerRef.current[scannedToolMarkerCode];
       const isCheckedOut = Boolean(currentTool?.isCheckedOut);
       setShowGuideModal(false);
       setGuideMarker(null);
@@ -348,7 +354,7 @@ const ArPage = ({ onLoggedOut }) => {
         toolLabel: marker.label,
         actionLabel: isCheckedOut ? "Check In" : "Check Out",
         actionEndpoint: isCheckedOut ? "/api/scantoolin" : "/api/scantoolout",
-        markerCode: marker.markerCode,
+        markerCode: scannedToolMarkerCode,
       });
       setScanActionPrompt(null);
       return;
@@ -356,7 +362,8 @@ const ArPage = ({ onLoggedOut }) => {
 
     try {
       const responseData = await apiRequest("/api/fetchstepbystep", "POST", {
-        assetFaultMarkerCode: marker.assetFaultMarkerCode || null,
+        assetFaultMarkerCode: getFaultMarkerCode(marker),
+        assetFaultQrCode: getFaultMarkerCode(marker),
       });
       const guideSteps = Array.isArray(responseData.steps) ? responseData.steps : [];
 
@@ -388,7 +395,8 @@ const ArPage = ({ onLoggedOut }) => {
     try {
       setIsMarkingRepaired(true);
       const responseData = await apiRequest("/api/markfaultrepaired", "POST", {
-        assetFaultMarkerCode: guideMarker.assetFaultMarkerCode || null,
+        assetFaultMarkerCode: getFaultMarkerCode(guideMarker),
+        assetFaultQrCode: getFaultMarkerCode(guideMarker),
         faultTypeId: guideMarker.faultTypeId || null,
       });
 
@@ -425,6 +433,7 @@ const ArPage = ({ onLoggedOut }) => {
     try {
       await apiRequest(scanConfirmation.actionEndpoint, "POST", {
         markerCode: scanConfirmation.markerCode,
+        qrCode: scanConfirmation.markerCode,
       });
       await fetchTools();
       setFaultReportNotice(`${scanConfirmation.actionLabel} completed for ${scanConfirmation.toolLabel}.`);
