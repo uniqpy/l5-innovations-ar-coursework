@@ -2,6 +2,11 @@ import React, { useEffect, useRef } from "react";
 import TargetSrc from "../../assets/mind_markers/targets.mind?url";
 import { MARKERS } from "./markers";
 
+const BOX_PRIMARY_COLOR = "#1fe4cf";
+const HALF_WIDTH = 0.34;
+const HALF_HEIGHT = 0.22;
+const CORE_OFFSETS = [-0.006, -0.003, 0, 0.003, 0.006];
+
 // Main AR scene wrapper that connects MindAR events to React callbacks.
 const ArScene = ({ onTargetFound: ArMarkerFound, onTargetLost: ArMarkerLost }) => {
   // Refs used for scene access, tracked marker entities, and stable callback references.
@@ -72,7 +77,7 @@ const ArScene = ({ onTargetFound: ArMarkerFound, onTargetLost: ArMarkerLost }) =
       mindar-image={`imageTargetSrc: ${TargetSrc}; maxTrack: 4; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: no;`}
       color-space="sRGB"
       embedded
-      renderer="colorManagement: true, physicallyCorrectLights"
+      renderer="colorManagement: true; physicallyCorrectLights: true; alpha: true"
       vr-mode-ui="enabled: false"
       xr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: false"
@@ -89,16 +94,29 @@ const ArScene = ({ onTargetFound: ArMarkerFound, onTargetLost: ArMarkerLost }) =
           mindar-image-target={`targetIndex: ${index}`}
         >
           <a-entity position="0 0 0.08" rotation="0 0 0">
-            <a-entity line="start: -0.275 0.175 0; end: 0.275 0.175 0; color: #17c3b2"></a-entity>
-            <a-entity line="start: 0.275 0.175 0; end: 0.275 -0.175 0; color: #17c3b2"></a-entity>
-            <a-entity line="start: 0.275 -0.175 0; end: -0.275 -0.175 0; color: #17c3b2"></a-entity>
-            <a-entity line="start: -0.275 -0.175 0; end: -0.275 0.175 0; color: #17c3b2"></a-entity>
+            {CORE_OFFSETS.map((offset) => (
+              <React.Fragment key={`core-${offset}`}>
+                <a-entity
+                  line={`start: ${-HALF_WIDTH} ${HALF_HEIGHT + offset} 0.002; end: ${HALF_WIDTH} ${HALF_HEIGHT + offset} 0.002; color: ${BOX_PRIMARY_COLOR}`}
+                ></a-entity>
+                <a-entity
+                  line={`start: ${-HALF_WIDTH} ${-HALF_HEIGHT + offset} 0.002; end: ${HALF_WIDTH} ${-HALF_HEIGHT + offset} 0.002; color: ${BOX_PRIMARY_COLOR}`}
+                ></a-entity>
+                <a-entity
+                  line={`start: ${HALF_WIDTH + offset} ${HALF_HEIGHT} 0.002; end: ${HALF_WIDTH + offset} ${-HALF_HEIGHT} 0.002; color: ${BOX_PRIMARY_COLOR}`}
+                ></a-entity>
+                <a-entity
+                  line={`start: ${-HALF_WIDTH + offset} ${HALF_HEIGHT} 0.002; end: ${-HALF_WIDTH + offset} ${-HALF_HEIGHT} 0.002; color: ${BOX_PRIMARY_COLOR}`}
+                ></a-entity>
+              </React.Fragment>
+            ))}
           </a-entity>
+
           <a-text
             value={marker.label}
             position="0 0.32 0.08"
             align="center"
-            color="#ffd166"
+            color={BOX_PRIMARY_COLOR}
             width="1.6"
             shader="msdf"
           ></a-text>
