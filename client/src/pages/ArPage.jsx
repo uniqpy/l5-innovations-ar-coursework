@@ -83,7 +83,7 @@ const ArPage = ({ onLoggedOut }) => {
   const [guideStepIndex, setGuideStepIndex] = useState(0);
   const [isMarkingRepaired, setIsMarkingRepaired] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
-  const toolsByQrRef = useRef({});
+  const toolsByMarkerRef = useRef({});
   const showGuideModalRef = useRef(false);
   const scanConfirmationRef = useRef(null);
 
@@ -123,7 +123,13 @@ const ArPage = ({ onLoggedOut }) => {
 
   const fetchTools = useCallback(async () => {
     const responseData = await apiRequest("/api/tools", "GET");
-    setTools(Array.isArray(responseData.tools) ? responseData.tools : []);
+    const normalizedTools = Array.isArray(responseData.tools)
+      ? responseData.tools.map((tool) => ({
+          ...tool,
+          markerCode: tool.markerCode || null,
+        }))
+      : [];
+    setTools(normalizedTools);
   }, [apiRequest]);
 
   const handleLogout = async () => {
@@ -141,13 +147,13 @@ const ArPage = ({ onLoggedOut }) => {
   };
 
   useEffect(() => {
-    const nextByQr = {};
+    const nextByMarker = {};
     tools.forEach((tool) => {
-      if (tool.qrCode) {
-        nextByQr[tool.qrCode] = tool;
+      if (tool.markerCode) {
+        nextByMarker[tool.markerCode] = tool;
       }
     });
-    toolsByQrRef.current = nextByQr;
+    toolsByMarkerRef.current = nextByMarker;
   }, [tools]);
 
   useEffect(() => {
@@ -223,8 +229,8 @@ const ArPage = ({ onLoggedOut }) => {
     const reportMarker = reportMarkerIndex !== null ? MARKERS[reportMarkerIndex] : null;
     const selectedFaultType = faultTypes.find((faultType) => faultType.name === reportInput.typeOfFault);
 
-    if (!selectedFaultType && !reportMarker?.assetFaultQrCode) {
-      throw new Error("Select a known fault type or scan a registered fault QR marker.");
+    if (!selectedFaultType && !reportMarker?.assetFaultMarkerCode) {
+      throw new Error("Select a known fault type or scan a registered fault marker.");
     }
 
     const notesSegments = [
@@ -238,7 +244,7 @@ const ArPage = ({ onLoggedOut }) => {
       faultTypeName: reportInput.typeOfFault,
       assetId: reportMarker?.assetId || null,
       assetLabel: reportInput.location || reportInput.faultyPart || reportMarker?.label || "",
-      assetFaultQrCode: reportMarker?.assetFaultQrCode || null,
+      assetFaultMarkerCode: reportMarker?.assetFaultMarkerCode || null,
       urgency: reportInput.urgency,
       notes: notesSegments.join(" | "),
     });
@@ -266,7 +272,7 @@ const ArPage = ({ onLoggedOut }) => {
     }
 
     if (marker.type === "tool") {
-      const toolStatus = marker.qrCode ? toolsByQrRef.current[marker.qrCode] : null;
+      const toolStatus = marker.markerCode ? toolsByMarkerRef.current[marker.markerCode] : null;
       const isCheckedOut = Boolean(toolStatus?.isCheckedOut);
 
       setScanActionPrompt({
@@ -304,13 +310,13 @@ const ArPage = ({ onLoggedOut }) => {
     }
 
     if (scanActionPrompt.mode === "tool") {
-      if (!marker.qrCode) {
-        setFaultReportNotice("This tool marker has no QR mapping.");
+      if (!marker.markerCode) {
+        setFaultReportNotice("This tool marker has no marker mapping.");
         setScanActionPrompt(null);
         return;
       }
 
-      const currentTool = toolsByQrRef.current[marker.qrCode];
+      const currentTool = toolsByMarkerRef.current[marker.markerCode];
       const isCheckedOut = Boolean(currentTool?.isCheckedOut);
       setShowGuideModal(false);
       setGuideMarker(null);
@@ -319,7 +325,7 @@ const ArPage = ({ onLoggedOut }) => {
         toolLabel: marker.label,
         actionLabel: isCheckedOut ? "Check In" : "Check Out",
         actionEndpoint: isCheckedOut ? "/api/scantoolin" : "/api/scantoolout",
-        qrCode: marker.qrCode,
+        markerCode: marker.markerCode,
       });
       setScanActionPrompt(null);
       return;
@@ -327,7 +333,7 @@ const ArPage = ({ onLoggedOut }) => {
 
     try {
       const responseData = await apiRequest("/api/fetchstepbystep", "POST", {
-        assetFaultQrCode: marker.assetFaultQrCode || null,
+        assetFaultMarkerCode: marker.assetFaultMarkerCode || null,
       });
       const guideSteps = Array.isArray(responseData.steps) ? responseData.steps : [];
 
@@ -359,7 +365,7 @@ const ArPage = ({ onLoggedOut }) => {
     try {
       setIsMarkingRepaired(true);
       const responseData = await apiRequest("/api/markfaultrepaired", "POST", {
-        assetFaultQrCode: guideMarker.assetFaultQrCode || null,
+        assetFaultMarkerCode: guideMarker.assetFaultMarkerCode || null,
         faultTypeId: guideMarker.faultTypeId || null,
       });
 
@@ -395,7 +401,7 @@ const ArPage = ({ onLoggedOut }) => {
 
     try {
       await apiRequest(scanConfirmation.actionEndpoint, "POST", {
-        qrCode: scanConfirmation.qrCode,
+        markerCode: scanConfirmation.markerCode,
       });
       await fetchTools();
       setFaultReportNotice(`${scanConfirmation.actionLabel} completed for ${scanConfirmation.toolLabel}.`);
@@ -453,7 +459,7 @@ const ArPage = ({ onLoggedOut }) => {
 
   return (
     <div className="ar-page-container" style={{ display: "flex", height: "100vh" }}>
-      <div className="card ar-scene-card border-0 shadow-lg">
+      <div className="card ar-scene-card">
         <ArScene onTargetFound={handleArTargetFound} onTargetLost={handleTargetLost} />
       </div>
 

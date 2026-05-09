@@ -4,16 +4,27 @@ const ScanConfirmPopup = ({ confirmation, onConfirm, onCancel }) => {
   if (!confirmation) return null;
 
   return (
-    <div className="message-box scan-confirm-box">
-      <h5 className="mb-3">{confirmation.toolLabel}</h5>
-      <p className="mb-3">{confirmation.actionLabel} this tool?</p>
-      <div className="d-flex justify-content-center gap-2">
-        <button className="btn btn-success" onClick={onConfirm}>
-          Confirm
-        </button>
-        <button className="btn btn-secondary" onClick={onCancel}>
-          Cancel
-        </button>
+    <div className="modal-overlay">
+      <div className="modal-content modal-content-confirm">
+        <div className="modal-card-header">
+          <div className="modal-card-header-main">
+            <h3 className="modal-card-title">Tool Scan Confirmation</h3>
+            <p className="modal-card-subtitle">{confirmation.toolLabel}</p>
+          </div>
+        </div>
+
+        <div className="modal-card-body">
+          <p className="modal-description">{confirmation.actionLabel} this tool?</p>
+        </div>
+
+        <div className="modal-card-footer">
+          <button className="btn btn-primary" onClick={onCancel}>
+            Close
+          </button>
+          <button className="btn btn-secondary" onClick={onConfirm}>
+            Confirm
+          </button>
+        </div>
       </div>
     </div>
   );

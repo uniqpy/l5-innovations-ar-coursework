@@ -18,27 +18,40 @@ const RepairGuideModal = ({
   return (
     <div className="modal-overlay">
       <div className="modal-content modal-content-help">
-        <h3 className="help-title">{guideMarker.label} Guide</h3>
-        <p className="help-description">{guideMarker.guideSteps[stepIndex]}</p>
-        <p className="modal-description">
-          Step {stepIndex + 1} of {guideMarker.guideSteps.length}
-        </p>
-        <div className="d-flex justify-content-center gap-3">
-          <button className="btn btn-outline-secondary" onClick={onPrevious}>
-            <i className="bi bi-arrow-left"></i>
-          </button>
-          <button className="btn btn-outline-secondary" onClick={onNext}>
-            <i className="bi bi-arrow-right"></i>
-          </button>
+        <div className="modal-card-header">
+          <div className="modal-card-header-main">
+            <h3 className="modal-card-title">{guideMarker.label} Guide</h3>
+            <p className="modal-card-subtitle">
+              Step {stepIndex + 1} of {guideMarker.guideSteps.length}
+            </p>
+          </div>
         </div>
-        <button className="btn btn-secondary mt-3" onClick={onClose}>
-          Close
-        </button>
-        {canMarkRepaired && (
-          <button className="btn btn-success mt-2" onClick={onMarkRepaired} disabled={Boolean(isMarkingRepaired)}>
-            {isMarkingRepaired ? "Marking..." : "Mark as Repaired"}
-          </button>
-        )}
+
+        <div className="modal-card-body">
+          <p className="help-description">{guideMarker.guideSteps[stepIndex]}</p>
+        </div>
+
+        <div className="modal-card-footer modal-card-footer-split">
+          <div className="modal-inline-actions">
+            <button className="btn btn-secondary" onClick={onPrevious} aria-label="Previous step">
+              <i className="bi bi-arrow-left"></i>
+            </button>
+            <button className="btn btn-secondary" onClick={onNext} aria-label="Next step">
+              <i className="bi bi-arrow-right"></i>
+            </button>
+          </div>
+
+          <div className="modal-inline-actions">
+            <button className="btn btn-primary" onClick={onClose}>
+              Close
+            </button>
+            {canMarkRepaired && (
+              <button className="btn btn-primary" onClick={onMarkRepaired} disabled={Boolean(isMarkingRepaired)}>
+                {isMarkingRepaired ? "Marking..." : "Mark as Repaired"}
+              </button>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

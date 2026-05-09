@@ -500,12 +500,17 @@ app.post("/api/reportfault", requireAuth, async (req, res) => {
       faultTypeName: faultTypeNameInput,
       assetId: assetIdInput,
       assetLabel: assetLabelInput,
+      assetFaultMarkerCode: assetFaultMarkerCodeInput,
       assetFaultQrCode: assetFaultQrCodeInput,
       urgency,
       notes,
     } = req.body || {};
 
-    const assetFaultQrCode = String(assetFaultQrCodeInput || "").trim().slice(0, 80);
+    const assetFaultQrCode = String(
+      assetFaultMarkerCodeInput || assetFaultQrCodeInput || "",
+    )
+      .trim()
+      .slice(0, 80);
     const assetLabel = String(assetLabelInput || "").trim().slice(0, 160);
     const faultTypeName = String(faultTypeNameInput || "").trim().slice(0, 100);
     let faultTypeId = Number(faultTypeIdInput || 0);
@@ -641,7 +646,11 @@ app.post("/api/reportfault", requireAuth, async (req, res) => {
 
 app.post("/api/markfaultrepaired", requireAuth, async (req, res) => {
   try {
-    const assetFaultQrCode = String(req.body?.assetFaultQrCode || "").trim().slice(0, 80);
+    const assetFaultQrCode = String(
+      req.body?.assetFaultMarkerCode || req.body?.assetFaultQrCode || "",
+    )
+      .trim()
+      .slice(0, 80);
     let faultTypeId = Number(req.body?.faultTypeId || 0);
 
     if (!faultTypeId && assetFaultQrCode) {
@@ -798,7 +807,7 @@ app.get("/api/tools", requireAuth, async (_req, res) => {
       tools: rows.map((toolRow) => ({
         id: toolRow.id,
         name: toolRow.name,
-        qrCode: toolRow.qr_code,
+        markerCode: toolRow.qr_code,
         lastAction: toolRow.last_action,
         isCheckedOut: toolRow.last_action === "checked_out",
         lastCheckedOutAt: toolRow.last_checked_out_at,
@@ -813,9 +822,11 @@ app.get("/api/tools", requireAuth, async (_req, res) => {
 });
 
 async function handleToolScanAction(req, res, action) {
-  const qrCode = String(req.body?.qrCode || "").trim().slice(0, 80);
+  const qrCode = String(req.body?.markerCode || req.body?.qrCode || "")
+    .trim()
+    .slice(0, 80);
   if (!qrCode) {
-    res.status(400).json({ error: "qrCode is required." });
+    res.status(400).json({ error: "markerCode is required." });
     return;
   }
 
@@ -893,7 +904,7 @@ async function handleToolScanAction(req, res, action) {
     tool: {
       id: refreshedTool.id,
       name: refreshedTool.name,
-      qrCode: refreshedTool.qr_code,
+      markerCode: refreshedTool.qr_code,
       lastAction: refreshedTool.last_action,
       isCheckedOut: refreshedTool.last_action === "checked_out",
       lastCheckedOutAt: refreshedTool.last_checked_out_at,
@@ -923,7 +934,11 @@ app.post("/api/scantoolout", requireAuth, async (req, res) => {
 
 app.post("/api/fetchstepbystep", requireAuth, async (req, res) => {
   try {
-    const assetFaultQrCode = String(req.body?.assetFaultQrCode || "").trim().slice(0, 80);
+    const assetFaultQrCode = String(
+      req.body?.assetFaultMarkerCode || req.body?.assetFaultQrCode || "",
+    )
+      .trim()
+      .slice(0, 80);
     let faultTypeId = Number(req.body?.faultTypeId || 0);
 
     if (!faultTypeId && assetFaultQrCode) {
@@ -934,7 +949,7 @@ app.post("/api/fetchstepbystep", requireAuth, async (req, res) => {
     }
 
     if (!faultTypeId) {
-      res.status(400).json({ error: "faultTypeId or a valid assetFaultQrCode is required." });
+      res.status(400).json({ error: "faultTypeId or a valid asset fault marker code is required." });
       return;
     }
 

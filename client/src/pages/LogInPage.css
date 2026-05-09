@@ -4,10 +4,7 @@
   align-items: center;
   justify-content: center;
   padding: 1.25rem;
-  background:
-    radial-gradient(circle at 8% 10%, rgba(44, 62, 80, 0.08), transparent 40%),
-    radial-gradient(circle at 88% 84%, rgba(7, 63, 55, 0.1), transparent 38%),
-    linear-gradient(180deg, #f7f8f9 0%, #eef1f4 100%);
+  background: #eef2f6;
 }
 
 .login-card {
@@ -62,14 +59,15 @@
   padding: 0.72rem;
   font-weight: 600;
   color: #ffffff;
-  background: linear-gradient(135deg, #1f4d7a 0%, #215f4d 100%);
-  border: none;
+  background: #1f4d7a;
+  border: 1px solid #1f4d7a;
 }
 
 .login-submit:hover,
 .login-submit:focus {
   color: #ffffff;
-  background: linear-gradient(135deg, #1b446c 0%, #1d5242 100%);
+  background: #1b446c;
+  border-color: #1b446c;
 }
 
 .login-submit:disabled {

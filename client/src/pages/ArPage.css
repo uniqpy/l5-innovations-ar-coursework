@@ -1,4 +1,15 @@
 .ar-page-container {
+  --enterprise-navy-700: #1f4d7a;
+  --enterprise-navy-800: #1b446c;
+  --enterprise-slate-800: #2f495f;
+  --enterprise-slate-900: #253645;
+  --enterprise-slate-700: #3f5263;
+  --enterprise-slate-200: #d9e1e8;
+  --enterprise-slate-300: #c8d3dc;
+  --enterprise-slate-050: #f6f9fc;
+  --enterprise-danger-700: #b42318;
+  --enterprise-danger-800: #931f15;
+
   width: 100%;
   height: 100vh;
   position: relative;
@@ -15,6 +26,11 @@
   border-radius: 18px;
   overflow: hidden;
   background: #0d1117;
+  border: 1px solid #8ea3b5;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 18px 34px rgba(12, 28, 44, 0.24),
+    0 6px 14px rgba(12, 28, 44, 0.16);
 }
 
 .ar-scene {
@@ -83,8 +99,10 @@
   bottom: 14px;
   transform: translateX(-50%);
   width: min(940px, calc(100vw - 28px));
-  background-color: rgba(15, 25, 40, 0.93);
-  box-shadow: 0 14px 28px rgba(6, 12, 24, 0.35);
+  background: rgba(248, 250, 252, 0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid #8ea3b5;
+  box-shadow: 0 16px 32px rgba(17, 34, 52, 0.18), 0 4px 10px rgba(17, 34, 52, 0.12);
   border-radius: 16px;
   padding: 8px;
   z-index: 10002;
@@ -96,6 +114,7 @@
 .taskbar-button {
   flex: 1;
   min-height: 54px;
+  border: 1px solid transparent !important;
   border-radius: 12px;
   display: inline-flex;
   align-items: center;
@@ -106,6 +125,59 @@
   line-height: 1;
   white-space: nowrap;
   padding: 0.75rem 0.9rem;
+  transition: background-color 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.ar-taskbar .btn-primary {
+  color: #ffffff;
+  background: var(--enterprise-navy-700);
+  border-color: var(--enterprise-navy-700) !important;
+}
+
+.ar-taskbar .btn-primary:hover,
+.ar-taskbar .btn-primary:focus-visible {
+  color: #ffffff;
+  background: var(--enterprise-navy-800);
+  border-color: var(--enterprise-navy-800) !important;
+}
+
+.ar-taskbar .btn-secondary {
+  color: #ffffff;
+  background: var(--enterprise-slate-800);
+  border-color: var(--enterprise-slate-800) !important;
+}
+
+.ar-taskbar .btn-secondary:hover,
+.ar-taskbar .btn-secondary:focus-visible {
+  color: #ffffff;
+  background: var(--enterprise-slate-900);
+  border-color: var(--enterprise-slate-900) !important;
+}
+
+.ar-taskbar .btn-info {
+  color: var(--enterprise-slate-900);
+  background: var(--enterprise-slate-050);
+  border-color: var(--enterprise-slate-300) !important;
+}
+
+.ar-taskbar .btn-info:hover,
+.ar-taskbar .btn-info:focus-visible {
+  color: #15202b;
+  background: #edf3f8;
+  border-color: #bfceda !important;
+}
+
+.ar-taskbar .btn-danger {
+  color: #ffffff;
+  background: var(--enterprise-danger-700);
+  border-color: var(--enterprise-danger-700) !important;
+}
+
+.ar-taskbar .btn-danger:hover,
+.ar-taskbar .btn-danger:focus-visible {
+  color: #ffffff;
+  background: var(--enterprise-danger-800);
+  border-color: var(--enterprise-danger-800) !important;
 }
 
 .taskbar-icon {
@@ -172,7 +244,10 @@
 }
 
 .scan-action-trigger {
-  box-shadow: 0 8px 18px rgba(8, 14, 24, 0.34);
+  color: #ffffff;
+  background: var(--enterprise-slate-700);
+  border-color: var(--enterprise-slate-700);
+  box-shadow: 0 8px 18px rgba(12, 24, 36, 0.24);
 }
 
 .report-fault-toast {
@@ -193,7 +268,7 @@
 
 .report-fault-trigger {
   gap: 8px;
-  box-shadow: 0 10px 24px rgba(180, 30, 30, 0.48);
+  box-shadow: 0 10px 24px rgba(148, 31, 21, 0.32);
 }
 
 .report-fault-trigger i {
@@ -236,30 +311,146 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(17, 32, 48, 0.42);
+  backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10001;
+  padding: 12px;
+  box-sizing: border-box;
 }
 
 .modal-content {
-  background-color: rgba(255, 255, 255, 0.95);
-  padding: 30px;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+  border: 1px solid #c9d5df;
+  border-radius: 14px;
+  box-shadow: 0 18px 40px rgba(9, 24, 39, 0.2), 0 6px 16px rgba(9, 24, 39, 0.12);
+  overflow: hidden;
 }
 
 .modal-content-help {
-  text-align: center;
-  max-width: 800px;
+  width: min(720px, calc(100vw - 24px));
 }
 
 .modal-content-faults {
-  text-align: left;
-  max-width: 500px;
+  width: min(560px, calc(100vw - 24px));
   max-height: 80vh;
+}
+
+.modal-content-confirm {
+  width: min(430px, calc(100vw - 24px));
+}
+
+.modal-card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #d5dfe8;
+  background: #f5f8fb;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 12px;
+}
+
+.modal-card-header-main {
+  min-width: 0;
+  text-align: center;
+}
+
+.modal-card-title {
+  margin: 0;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: #243949;
+  letter-spacing: 0.01em;
+}
+
+.modal-card-subtitle {
+  margin: 6px 0 0;
+  font-size: 0.84rem;
+  color: #4b6274;
+}
+
+.modal-header-close {
+  min-height: 34px !important;
+  padding: 0.3rem 0.65rem !important;
+  font-size: 0.78rem !important;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.modal-card-body {
+  padding: 18px 20px;
+  max-height: 52vh;
   overflow: auto;
+}
+
+.modal-card-footer {
+  padding: 14px 20px;
+  border-top: 1px solid #d5dfe8;
+  background: #f9fbfd;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-card-footer-split {
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.modal-inline-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modal-content .btn {
+  min-height: 38px;
+  border-radius: 10px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  border-width: 1px;
+}
+
+.modal-content .btn-primary {
+  color: #ffffff;
+  background: var(--enterprise-navy-700);
+  border-color: var(--enterprise-navy-700);
+}
+
+.modal-content .btn-primary:hover,
+.modal-content .btn-primary:focus-visible {
+  color: #ffffff;
+  background: var(--enterprise-navy-800);
+  border-color: var(--enterprise-navy-800);
+}
+
+.modal-content .btn-secondary {
+  color: #253645;
+  background: #ffffff;
+  border-color: #b8c8d6;
+}
+
+.modal-content .btn-secondary:hover,
+.modal-content .btn-secondary:focus-visible {
+  color: #15202b;
+  background: #f3f7fb;
+  border-color: #9fb3c4;
+}
+
+.modal-content .btn-danger {
+  color: #ffffff;
+  background: var(--enterprise-danger-700);
+  border-color: var(--enterprise-danger-700);
+}
+
+.modal-content .btn-danger:hover,
+.modal-content .btn-danger:focus-visible {
+  color: #ffffff;
+  background: var(--enterprise-danger-800);
+  border-color: var(--enterprise-danger-800);
 }
 
 .modal-title {
@@ -271,57 +462,58 @@
 }
 
 .modal-description {
-  margin-bottom: 20px;
-  font-size: 14px;
-  color: #666;
+  margin-bottom: 0;
+  font-size: 0.9rem;
+  color: #405667;
+  line-height: 1.5;
 }
 
 .fault-list-container {
   display: flex;
   flex-direction: column;
+  gap: 8px;
 }
 
 .fault-item {
-  padding: 15px;
-  margin-bottom: 10px;
-  background-color: rgba(170, 59, 255, 0.1);
-  border-left: 4px solid rgb(170, 59, 255);
-  border-radius: 4px;
+  padding: 14px 14px 13px;
+  background: #f7fbff;
+  border: 1px solid #cfdae5;
+  border-left: 4px solid #4f687c;
+  border-radius: 10px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.14s ease, border-color 0.14s ease, transform 0.14s ease;
 }
 
 .fault-item:hover {
-  background-color: rgba(170, 59, 255, 0.2);
+  background: #edf4fb;
+  border-color: #9fb6ca;
+  transform: translateY(-1px);
 }
 
 .fault-title {
   margin: 0 0 5px 0;
+  color: #243949;
+  font-size: 0.94rem;
+  font-weight: 700;
 }
 
 .fault-description {
   margin: 0;
-  font-size: 14px;
-  color: #666;
+  font-size: 0.86rem;
+  color: #4c6275;
 }
 
 .fault-detail-box {
-  background-color: rgba(170, 59, 255, 0.05);
+  background: #f5f9fd;
+  border: 1px solid #cfdae5;
   padding: 15px;
-  border-radius: 4px;
-  margin-bottom: 20px;
+  border-radius: 10px;
 }
 
 .fault-detail-text {
   margin: 0;
-}
-
-.modal-close-button {
-  margin-top: 20px;
-}
-
-.fault-back-button {
-  margin-top: 0;
+  color: #2f4658;
+  line-height: 1.5;
 }
 
 .help-title {
@@ -329,7 +521,22 @@
 }
 
 .help-description {
-  margin-bottom: 20px;
+  margin: 0;
+  color: #314a5d;
+  line-height: 1.55;
+}
+
+.help-guide-section + .help-guide-section {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #d8e2ea;
+}
+
+.help-guide-heading {
+  margin: 0 0 6px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #25394a;
 }
 
 @media (max-width: 991.98px) {
