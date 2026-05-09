@@ -14,6 +14,8 @@ import RepairGuideModal from "./ar/RepairGuideModal";
 import { MARKERS } from "./ar/markers";
 import { API_BASE_URL } from "../config/api";
 
+const TARGET_LOST_PROMPT_BUFFER_MS = 1000;
+
 const FeatherIcon = ({ name }) => {
   const sharedProps = {
     fill: "none",
@@ -86,6 +88,7 @@ const ArPage = ({ onLoggedOut }) => {
   const toolsByQrRef = useRef({});
   const showGuideModalRef = useRef(false);
   const scanConfirmationRef = useRef(null);
+  const scanPromptDismissTimeoutRef = useRef(null);
 
   const apiRequest = useCallback(async (path, method = "GET", body = null) => {
     const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -157,6 +160,14 @@ const ArPage = ({ onLoggedOut }) => {
   useEffect(() => {
     scanConfirmationRef.current = scanConfirmation;
   }, [scanConfirmation]);
+
+  useEffect(() => {
+    return () => {
+      if (scanPromptDismissTimeoutRef.current) {
+        clearTimeout(scanPromptDismissTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -258,6 +269,11 @@ const ArPage = ({ onLoggedOut }) => {
   };
 
   const handleArTargetFound = useCallback((targetIndex) => {
+    if (scanPromptDismissTimeoutRef.current) {
+      clearTimeout(scanPromptDismissTimeoutRef.current);
+      scanPromptDismissTimeoutRef.current = null;
+    }
+
     const marker = MARKERS[targetIndex];
     if (!marker) return;
 
@@ -287,11 +303,18 @@ const ArPage = ({ onLoggedOut }) => {
   }, []);
 
   const handleTargetLost = useCallback((targetIndex) => {
-    setScanActionPrompt((currentPrompt) => {
-      if (!currentPrompt) return currentPrompt;
-      if (currentPrompt.targetIndex !== targetIndex) return currentPrompt;
-      return null;
-    });
+    if (scanPromptDismissTimeoutRef.current) {
+      clearTimeout(scanPromptDismissTimeoutRef.current);
+    }
+
+    scanPromptDismissTimeoutRef.current = setTimeout(() => {
+      setScanActionPrompt((currentPrompt) => {
+        if (!currentPrompt) return currentPrompt;
+        if (currentPrompt.targetIndex !== targetIndex) return currentPrompt;
+        return null;
+      });
+      scanPromptDismissTimeoutRef.current = null;
+    }, TARGET_LOST_PROMPT_BUFFER_MS);
   }, []);
 
   const handleOpenScanAction = async () => {
