@@ -1,14 +1,10 @@
 export const MARKERS = [
-  { label: "Spanner", type: "tool" },
-  { label: "Screwdriver", type: "tool" },
+  { label: "Adjustable Wrench", type: "tool", qrCode: "AR-TOOL-WRENCH" },
+  { label: "Pliers", type: "tool", qrCode: "AR-TOOL-PLIERS" },
   {
-    label: "Electric Box",
-    type: "machine",
-    guideSteps: [
-      "Isolate power to the electrical box before any inspection.",
-      "Inspect the panel for visible damage, heat marks, or loose fittings.",
-      "Report faults and only re-energize when checks are completed safely.",
-    ],
+    label: "Train 204 Brake Assembly",
+    type: "fault",
+    assetFaultQrCode: "AR-FAULT-TRAIN204-BRAKES",
   },
-  { label: "Spanner (Alt)", type: "tool" },
+  { label: "Hammer", type: "tool", qrCode: "AR-TOOL-HAMMER" },
 ];
