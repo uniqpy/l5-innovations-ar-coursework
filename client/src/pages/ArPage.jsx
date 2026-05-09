@@ -348,20 +348,20 @@ const ArPage = ({ onLoggedOut }) => {
       />
 
       {scanActionPrompt && (
-        <div className="scan-action-toast">
-          <button className="btn btn-success floating-action-button scan-action-trigger" onClick={handleOpenScanAction}>
-            {scanActionPrompt.buttonLabel}
-          </button>
-        </div>
-      )}
+        <div className="floating-actions-stack">
+          <div className="report-fault-toast">
+            <button className="btn btn-danger floating-action-button report-fault-trigger" onClick={toggleFaultReportModal}>
+              <i className="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+              <span>Report Fault</span>
+            </button>
+            {faultReportNotice && <p className="report-fault-notice">{faultReportNotice}</p>}
+          </div>
 
-      {scanActionPrompt && (
-        <div className="report-fault-toast">
-          <button className="btn btn-danger floating-action-button report-fault-trigger" onClick={toggleFaultReportModal}>
-            <i className="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
-            <span>Report Fault</span>
-          </button>
-          {faultReportNotice && <p className="report-fault-notice">{faultReportNotice}</p>}
+          <div className="scan-action-toast">
+            <button className="btn btn-success floating-action-button scan-action-trigger" onClick={handleOpenScanAction}>
+              {scanActionPrompt.buttonLabel}
+            </button>
+          </div>
         </div>
       )}
 
