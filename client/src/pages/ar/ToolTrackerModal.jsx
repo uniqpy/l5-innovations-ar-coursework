@@ -12,10 +12,12 @@ const ToolTrackerModal = ({ checkedOutTools, onClose }) => {
           <p className="fault-description">No tools are currently checked out.</p>
         ) : (
           <div className="fault-list-container">
-            {checkedOutTools.map((toolName) => (
-              <div key={toolName} className="fault-item">
-                <h5 className="fault-title">{toolName}</h5>
-                <p className="fault-description">Checked out</p>
+            {checkedOutTools.map((tool) => (
+              <div key={tool.id || tool.qrCode || tool.name} className="fault-item">
+                <h5 className="fault-title">{tool.name}</h5>
+                <p className="fault-description">
+                  Checked out{tool.lastCheckedOutByEmail ? ` by ${tool.lastCheckedOutByEmail}` : ""}
+                </p>
               </div>
             ))}
           </div>

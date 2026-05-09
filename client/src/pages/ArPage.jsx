@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
-import faultsData from "../data/faults.json";
 import "./ArPage.css";
 import ArScene from "./ar/ArScene";
 import HelpModal from "./ar/HelpModal";
@@ -66,25 +65,56 @@ const FeatherIcon = ({ name }) => {
 };
 
 const ArPage = ({ onLoggedOut }) => {
-  // Declare all our variables used to load modals/other elements.
   const navigate = useNavigate();
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showFaultsModal, setShowFaultsModal] = useState(false);
   const [showFaultReportModal, setShowFaultReportModal] = useState(false);
   const [showToolTrackerModal, setShowToolTrackerModal] = useState(false);
   const [selectedFault, setSelectedFault] = useState(null);
-  const [reportedFaults, setReportedFaults] = useState([]);
+  const [faults, setFaults] = useState([]);
+  const [faultTypes, setFaultTypes] = useState([]);
+  const [tools, setTools] = useState([]);
   const [faultReportNotice, setFaultReportNotice] = useState("");
   const [reportMarkerIndex, setReportMarkerIndex] = useState(null);
-  const [checkedOutToolIndexes, setCheckedOutToolIndexes] = useState([]);
   const [scanConfirmation, setScanConfirmation] = useState(null);
   const [scanActionPrompt, setScanActionPrompt] = useState(null);
   const [showGuideModal, setShowGuideModal] = useState(false);
-  const [guideMarkerIndex, setGuideMarkerIndex] = useState(null);
+  const [guideMarker, setGuideMarker] = useState(null);
   const [guideStepIndex, setGuideStepIndex] = useState(0);
-  const checkedOutToolIndexesRef = useRef([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  const toolsByQrRef = useRef({});
   const showGuideModalRef = useRef(false);
   const scanConfirmationRef = useRef(null);
+
+  const apiRequest = useCallback(async (path, method = "GET", body = null) => {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      method,
+      credentials: "include",
+      headers: body ? { "Content-Type": "application/json" } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data?.error || "Request failed.");
+    }
+    return data;
+  }, []);
+
+  const fetchFaults = useCallback(async () => {
+    const responseData = await apiRequest("/api/recievefaults", "POST", {});
+    setFaults(Array.isArray(responseData.faults) ? responseData.faults : []);
+  }, [apiRequest]);
+
+  const fetchFaultTypes = useCallback(async () => {
+    const responseData = await apiRequest("/api/faulttypes", "GET");
+    setFaultTypes(Array.isArray(responseData.faultTypes) ? responseData.faultTypes : []);
+  }, [apiRequest]);
+
+  const fetchTools = useCallback(async () => {
+    const responseData = await apiRequest("/api/tools", "GET");
+    setTools(Array.isArray(responseData.tools) ? responseData.tools : []);
+  }, [apiRequest]);
 
   const handleLogout = async () => {
     try {
@@ -101,8 +131,14 @@ const ArPage = ({ onLoggedOut }) => {
   };
 
   useEffect(() => {
-    checkedOutToolIndexesRef.current = checkedOutToolIndexes;
-  }, [checkedOutToolIndexes]);
+    const nextByQr = {};
+    tools.forEach((tool) => {
+      if (tool.qrCode) {
+        nextByQr[tool.qrCode] = tool;
+      }
+    });
+    toolsByQrRef.current = nextByQr;
+  }, [tools]);
 
   useEffect(() => {
     showGuideModalRef.current = showGuideModal;
@@ -111,6 +147,28 @@ const ArPage = ({ onLoggedOut }) => {
   useEffect(() => {
     scanConfirmationRef.current = scanConfirmation;
   }, [scanConfirmation]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    (async () => {
+      try {
+        await Promise.all([fetchFaults(), fetchFaultTypes(), fetchTools()]);
+      } catch (error) {
+        if (isMounted) {
+          setFaultReportNotice(error.message || "Unable to load AR data.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingData(false);
+        }
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [fetchFaults, fetchFaultTypes, fetchTools]);
 
   const toggleHelpModal = () => {
     setShowHelpModal((currentState) => !currentState);
@@ -125,7 +183,7 @@ const ArPage = ({ onLoggedOut }) => {
     setShowFaultReportModal((currentState) => {
       const nextState = !currentState;
       if (nextState) {
-        setReportMarkerIndex(scanActionPrompt?.targetIndex ?? null);
+        setReportMarkerIndex(scanActionPrompt?.mode === "fault" ? scanActionPrompt.targetIndex : null);
       } else {
         setReportMarkerIndex(null);
       }
@@ -146,22 +204,37 @@ const ArPage = ({ onLoggedOut }) => {
   };
 
   const handleSubmitFaultReport = async (reportInput) => {
-    const reportedAt = new Date();
-    const locationLabel = reportInput.location ? ` at ${reportInput.location}` : "";
-    const notesLabel = reportInput.notes || "No additional notes were provided.";
+    const reportMarker = reportMarkerIndex !== null ? MARKERS[reportMarkerIndex] : null;
+    const selectedFaultType = faultTypes.find((faultType) => faultType.name === reportInput.typeOfFault);
 
-    const reportedFault = {
-      id: `reported-${reportedAt.getTime()}`,
-      title: `${reportInput.typeOfFault} (${reportInput.urgency})`,
-      description: `${reportInput.faultyPart}${locationLabel}`,
-      details: `Reported on ${reportedAt.toLocaleString()}. ${notesLabel}`,
-    };
+    if (!selectedFaultType && !reportMarker?.assetFaultQrCode) {
+      throw new Error("Select a known fault type or scan a registered fault QR marker.");
+    }
 
-    setReportedFaults((currentFaults) => [reportedFault, ...currentFaults]);
+    const notesSegments = [
+      reportInput.notes?.trim(),
+      reportInput.location?.trim() ? `Location: ${reportInput.location.trim()}` : "",
+      reportInput.faultyPart?.trim() ? `Part: ${reportInput.faultyPart.trim()}` : "",
+    ].filter(Boolean);
+
+    const responseData = await apiRequest("/api/reportfault", "POST", {
+      faultTypeId: selectedFaultType?.id || null,
+      assetFaultQrCode: reportMarker?.assetFaultQrCode || null,
+      urgency: reportInput.urgency,
+      notes: notesSegments.join(" | "),
+    });
+
+    if (responseData.fault) {
+      setFaults((currentFaults) => [responseData.fault, ...currentFaults]);
+      setSelectedFault(responseData.fault);
+    } else {
+      await fetchFaults();
+      setSelectedFault(null);
+    }
+
     setShowFaultReportModal(false);
     setReportMarkerIndex(null);
     setShowFaultsModal(true);
-    setSelectedFault(reportedFault);
     setFaultReportNotice("Fault report submitted.");
   };
 
@@ -174,34 +247,23 @@ const ArPage = ({ onLoggedOut }) => {
     }
 
     if (marker.type === "tool") {
-      setScanActionPrompt((currentPrompt) => {
-        if (currentPrompt?.targetIndex === targetIndex && currentPrompt.mode === "tool") {
-          return currentPrompt;
-        }
+      const toolStatus = marker.qrCode ? toolsByQrRef.current[marker.qrCode] : null;
+      const isCheckedOut = Boolean(toolStatus?.isCheckedOut);
 
-        const isCheckedOut = checkedOutToolIndexesRef.current.includes(targetIndex);
-
-        return {
-          targetIndex,
-          mode: "tool",
-          markerLabel: marker.label,
-          buttonLabel: `${isCheckedOut ? "Check In" : "Check Out"} ${marker.label}`,
-        };
+      setScanActionPrompt({
+        targetIndex,
+        mode: "tool",
+        markerLabel: marker.label,
+        buttonLabel: `${isCheckedOut ? "Check In" : "Check Out"} ${marker.label}`,
       });
       return;
     }
 
-    setScanActionPrompt((currentPrompt) => {
-      if (currentPrompt?.targetIndex === targetIndex && currentPrompt.mode === "guide") {
-        return currentPrompt;
-      }
-
-      return {
-        targetIndex,
-        mode: "guide",
-        markerLabel: marker.label,
-        buttonLabel: `Open ${marker.label} Guide`,
-      };
+    setScanActionPrompt({
+      targetIndex,
+      mode: "fault",
+      markerLabel: marker.label,
+      buttonLabel: `Open ${marker.label} Guide`,
     });
   }, []);
 
@@ -213,7 +275,7 @@ const ArPage = ({ onLoggedOut }) => {
     });
   }, []);
 
-  const handleOpenScanAction = () => {
+  const handleOpenScanAction = async () => {
     if (!scanActionPrompt) return;
 
     const marker = MARKERS[scanActionPrompt.targetIndex];
@@ -223,45 +285,74 @@ const ArPage = ({ onLoggedOut }) => {
     }
 
     if (scanActionPrompt.mode === "tool") {
-      const isCheckedOut = checkedOutToolIndexesRef.current.includes(scanActionPrompt.targetIndex);
+      if (!marker.qrCode) {
+        setFaultReportNotice("This tool marker has no QR mapping.");
+        setScanActionPrompt(null);
+        return;
+      }
+
+      const currentTool = toolsByQrRef.current[marker.qrCode];
+      const isCheckedOut = Boolean(currentTool?.isCheckedOut);
       setShowGuideModal(false);
-      setGuideMarkerIndex(null);
+      setGuideMarker(null);
       setScanConfirmation({
         targetIndex: scanActionPrompt.targetIndex,
         toolLabel: marker.label,
         actionLabel: isCheckedOut ? "Check In" : "Check Out",
+        actionEndpoint: isCheckedOut ? "/api/scantoolin" : "/api/scantoolout",
+        qrCode: marker.qrCode,
       });
       setScanActionPrompt(null);
       return;
     }
 
-    setScanConfirmation(null);
-    setGuideMarkerIndex(scanActionPrompt.targetIndex);
-    setGuideStepIndex(0);
-    setShowGuideModal(true);
-    setScanActionPrompt(null);
-  };
+    try {
+      const responseData = await apiRequest("/api/fetchstepbystep", "POST", {
+        assetFaultQrCode: marker.assetFaultQrCode || null,
+      });
+      const guideSteps = Array.isArray(responseData.steps) ? responseData.steps : [];
 
-  //check to make sure user meant to scan that tool, if so add to list of tools that are tracked.
-  const handleConfirmToolAction = () => {
-    if (!scanConfirmation) return;
-    const { targetIndex } = scanConfirmation;
-
-    setCheckedOutToolIndexes((currentCheckedOut) => {
-      if (currentCheckedOut.includes(targetIndex)) {
-        return currentCheckedOut.filter((index) => index !== targetIndex);
+      if (guideSteps.length === 0) {
+        setFaultReportNotice("No guide steps configured for this marker yet.");
+        setScanActionPrompt(null);
+        return;
       }
-      return [...currentCheckedOut, targetIndex];
-    });
 
-    setScanConfirmation(null);
+      setScanConfirmation(null);
+      setGuideMarker({
+        ...marker,
+        guideSteps,
+      });
+      setGuideStepIndex(0);
+      setShowGuideModal(true);
+      setScanActionPrompt(null);
+    } catch (error) {
+      setFaultReportNotice(error.message || "Unable to load repair guide.");
+      setScanActionPrompt(null);
+    }
   };
 
-  const checkedOutTools = checkedOutToolIndexes
-    .map((index) => MARKERS[index]?.label || `Marker ${index}`)
-    .sort((a, b) => a.localeCompare(b));
-  const allFaults = [...reportedFaults, ...faultsData.faults];
-  const faultTypeOptions = faultsData.faults.map((fault) => fault.title);
+  const handleConfirmToolAction = async () => {
+    if (!scanConfirmation) return;
+
+    try {
+      await apiRequest(scanConfirmation.actionEndpoint, "POST", {
+        qrCode: scanConfirmation.qrCode,
+      });
+      await fetchTools();
+      setFaultReportNotice(`${scanConfirmation.actionLabel} completed for ${scanConfirmation.toolLabel}.`);
+    } catch (error) {
+      setFaultReportNotice(error.message || "Unable to update tool status.");
+    } finally {
+      setScanConfirmation(null);
+    }
+  };
+
+  const checkedOutTools = tools
+    .filter((tool) => tool.isCheckedOut)
+    .sort((firstTool, secondTool) => firstTool.name.localeCompare(secondTool.name));
+  const allFaults = faults;
+  const faultTypeOptions = Array.from(new Set(faultTypes.map((faultType) => faultType.name)));
   const reportMarker = reportMarkerIndex !== null ? MARKERS[reportMarkerIndex] : null;
   const reportMarkerLabel = reportMarker?.label || "";
   const reportLocation = reportMarker?.location || reportMarkerLabel;
@@ -271,13 +362,12 @@ const ArPage = ({ onLoggedOut }) => {
 
     const timeoutId = setTimeout(() => {
       setFaultReportNotice("");
-    }, 3000);
+    }, 3500);
 
     return () => clearTimeout(timeoutId);
   }, [faultReportNotice]);
 
-  //repair guide logic.
-  const activeGuideMarker = guideMarkerIndex !== null ? MARKERS[guideMarkerIndex] : null;
+  const activeGuideMarker = guideMarker;
   const guideSteps = activeGuideMarker?.guideSteps || [];
 
   const goToPreviousGuideStep = () => {
@@ -355,13 +445,19 @@ const ArPage = ({ onLoggedOut }) => {
         </div>
       )}
 
-      {scanActionPrompt && (
+      {scanActionPrompt?.mode === "fault" && (
         <div className="report-fault-toast">
           <button className="btn btn-danger report-fault-trigger" onClick={toggleFaultReportModal}>
             <i className="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
             <span>Report Fault</span>
           </button>
           {faultReportNotice && <p className="report-fault-notice">{faultReportNotice}</p>}
+        </div>
+      )}
+
+      {!scanActionPrompt?.mode && faultReportNotice && (
+        <div className="report-fault-toast">
+          <p className="report-fault-notice">{faultReportNotice}</p>
         </div>
       )}
 
@@ -373,6 +469,12 @@ const ArPage = ({ onLoggedOut }) => {
           onNext={goToNextGuideStep}
           onClose={() => setShowGuideModal(false)}
         />
+      )}
+
+      {isLoadingData && (
+        <div className="message-box">
+          <p className="mb-0">Syncing faults and tools...</p>
+        </div>
       )}
     </div>
   );

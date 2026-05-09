@@ -101,7 +101,7 @@ CREATE TABLE IF NOT EXISTS faults (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
-  UNIQUE KEY uq_faults_asset_fault_qr_code (asset_fault_qr_code),
+  KEY idx_faults_asset_fault_qr_code (asset_fault_qr_code),
   KEY idx_faults_fault_type_id (fault_type_id),
   KEY idx_faults_asset_id (asset_id),
   KEY idx_faults_severity_id (severity_id),
@@ -258,9 +258,10 @@ ON DUPLICATE KEY UPDATE
 --   AR-FAULT-LOCO88-ENGINE
 --   AR-FAULT-WATER7-BURSTPIPE
 
-INSERT INTO faults (fault_type_id, asset_id, severity_id, status_id, asset_fault_qr_code, notes, created_by_user_id)
+INSERT INTO faults (id, fault_type_id, asset_id, severity_id, status_id, asset_fault_qr_code, notes, created_by_user_id)
 VALUES
   (
+    1001,
     (
       SELECT ft.id
       FROM fault_types ft
@@ -275,6 +276,7 @@ VALUES
     (SELECT id FROM users WHERE email = 'field.engineer@example.com')
   ),
   (
+    1002,
     (
       SELECT ft.id
       FROM fault_types ft
@@ -289,6 +291,7 @@ VALUES
     (SELECT id FROM users WHERE email = 'field.engineer@example.com')
   ),
   (
+    1003,
     (
       SELECT ft.id
       FROM fault_types ft
@@ -303,6 +306,8 @@ VALUES
     (SELECT id FROM users WHERE email = 'field.engineer@example.com')
   )
 ON DUPLICATE KEY UPDATE
+  fault_type_id = VALUES(fault_type_id),
+  asset_id = VALUES(asset_id),
   asset_fault_qr_code = VALUES(asset_fault_qr_code),
   notes = VALUES(notes),
   status_id = VALUES(status_id),

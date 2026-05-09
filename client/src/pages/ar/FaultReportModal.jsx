@@ -55,6 +55,8 @@ const FaultReportModal = ({ onClose, onSubmit, initialFaultyPart, initialLocatio
         urgency: formState.urgency,
         notes: formState.notes.trim(),
       });
+    } catch (error) {
+      setErrorMessage(error?.message || "Unable to submit fault report.");
     } finally {
       setIsSubmitting(false);
     }
