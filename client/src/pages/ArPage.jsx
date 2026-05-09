@@ -439,7 +439,7 @@ const ArPage = ({ onLoggedOut }) => {
 
       {scanActionPrompt && (
         <div className="scan-action-toast">
-          <button className="btn btn-dark scan-action-trigger" onClick={handleOpenScanAction}>
+          <button className="btn btn-success floating-action-button scan-action-trigger" onClick={handleOpenScanAction}>
             {scanActionPrompt.buttonLabel}
           </button>
         </div>
@@ -447,7 +447,7 @@ const ArPage = ({ onLoggedOut }) => {
 
       {scanActionPrompt?.mode === "fault" && (
         <div className="report-fault-toast">
-          <button className="btn btn-danger report-fault-trigger" onClick={toggleFaultReportModal}>
+          <button className="btn btn-danger floating-action-button report-fault-trigger" onClick={toggleFaultReportModal}>
             <i className="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
             <span>Report Fault</span>
           </button>
