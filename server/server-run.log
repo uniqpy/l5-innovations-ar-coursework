@@ -1,6 +1,0 @@
-
-> server@1.0.0 start
-> node server.js
-
-◇ injected env (11) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
-Server running on http://localhost:8080
