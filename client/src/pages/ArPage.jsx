@@ -365,12 +365,17 @@ const ArPage = ({ onLoggedOut }) => {
 
       if (responseData.fault) {
         setFaults((currentFaults) => {
-          const existingIndex = currentFaults.findIndex((fault) => fault.id === responseData.fault.id);
+          const repairedFaultId = String(responseData.fault.id ?? "");
+          const existingIndex = currentFaults.findIndex((fault) => String(fault.id ?? "") === repairedFaultId);
           if (existingIndex < 0) {
             return [responseData.fault, ...currentFaults];
           }
 
           return currentFaults.map((fault, index) => (index === existingIndex ? responseData.fault : fault));
+        });
+        setSelectedFault((currentFault) => {
+          if (!currentFault) return currentFault;
+          return String(currentFault.id ?? "") === String(responseData.fault.id ?? "") ? null : currentFault;
         });
       } else {
         await fetchFaults();
@@ -404,7 +409,20 @@ const ArPage = ({ onLoggedOut }) => {
   const checkedOutTools = tools
     .filter((tool) => tool.isCheckedOut)
     .sort((firstTool, secondTool) => firstTool.name.localeCompare(secondTool.name));
-  const allFaults = faults;
+  const activeFaults = faults.filter((fault) => {
+    const metadataStatusName = String(fault?.metadata?.statusName || "")
+      .trim()
+      .toLowerCase();
+    const titleStatusMatch = String(fault?.title || "")
+      .trim()
+      .match(/\[([^\]]+)\]\s*$/);
+    const titleStatusName = String(titleStatusMatch?.[1] || "")
+      .trim()
+      .toLowerCase();
+    const statusName = metadataStatusName || titleStatusName;
+
+    return statusName !== "fixed" && statusName !== "resolved" && statusName !== "closed";
+  });
   const faultTypeOptions = Array.from(new Set(faultTypes.map((faultType) => faultType.name)));
   const reportMarker = reportMarkerIndex !== null ? MARKERS[reportMarkerIndex] : null;
   const reportMarkerLabel = reportMarker?.label || "";
@@ -462,7 +480,7 @@ const ArPage = ({ onLoggedOut }) => {
 
       {showFaultsModal && (
         <FaultsModal
-          faults={allFaults}
+          faults={activeFaults}
           selectedFault={selectedFault}
           onSelectFault={handleSelectFault}
           onBackToList={handleBackToFaultsList}
