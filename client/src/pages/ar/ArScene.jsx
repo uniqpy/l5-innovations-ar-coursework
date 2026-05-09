@@ -6,6 +6,8 @@ const BOX_PRIMARY_COLOR = "#1fe4cf";
 const HALF_WIDTH = 0.34;
 const HALF_HEIGHT = 0.22;
 const CORE_OFFSETS = [-0.006, -0.003, 0, 0.003, 0.006];
+const LABEL_SCALE = "1.35 1.35 1.35";
+const LABEL_WIDTH = "2.3";
 
 // Main AR scene wrapper that connects MindAR events to React callbacks.
 const ArScene = ({ onTargetFound: ArMarkerFound, onTargetLost: ArMarkerLost }) => {
@@ -114,10 +116,11 @@ const ArScene = ({ onTargetFound: ArMarkerFound, onTargetLost: ArMarkerLost }) =
 
           <a-text
             value={marker.label}
-            position="0 0.32 0.08"
+            position="0 0.4 0.08"
             align="center"
-            color={BOX_PRIMARY_COLOR}
-            width="1.6"
+            color="#e34f1e"
+            scale={LABEL_SCALE}
+            width={LABEL_WIDTH}
             shader="msdf"
           ></a-text>
         </a-entity>
