@@ -177,12 +177,12 @@ INSERT INTO users (email, password_hash, role_id)
 VALUES
   (
     'admin.tech@example.com',
-    '$2b$12$3GPF.l/2v8J9ToADQoQVku54R1Br77QrnrBFqP.Aq1aAhnUMq8/.e',
+    '$2b$12$hdabsLj/n65lKTMEeM0QROEM0WMAdegUBDqyJCsRtJWGY8n9jb1Xy',
     (SELECT id FROM roles WHERE name = 'admin')
   ),
   (
     'field.engineer@example.com',
-    '$2b$12$aOCnhT9eMOBZWcUGyaBcGuchAnGVWGEIbgDMfEKNld25bYGM.G1ga',
+    '$2b$12$hdabsLj/n65lKTMEeM0QROEM0WMAdegUBDqyJCsRtJWGY8n9jb1Xy',
     (SELECT id FROM roles WHERE name = 'engineer')
   )
 ON DUPLICATE KEY UPDATE
