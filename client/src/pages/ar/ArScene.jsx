@@ -3,6 +3,8 @@ import TargetSrc from "../../assets/mind_markers/targets.mind?url";
 import { MARKERS } from "./markers";
 
 const BOX_PRIMARY_COLOR = "#1fe4cf";
+const LABEL_TEXT_COLOR = "#f8fbff";
+const LABEL_BG_COLOR = "#10263b";
 const HALF_WIDTH = 0.34;
 const HALF_HEIGHT = 0.22;
 const CORE_OFFSETS = [-0.006, -0.003, 0, 0.003, 0.006];
@@ -113,12 +115,19 @@ const ArScene = ({ onTargetFound: ArMarkerFound, onTargetLost: ArMarkerLost }) =
               </React.Fragment>
             ))}
           </a-entity>
+          <a-plane
+            position="0 0.405 0.074"
+            width="0.86"
+            height="0.16"
+            color={LABEL_BG_COLOR}
+            opacity="0.78"
+          ></a-plane>
 
           <a-text
             value={marker.label}
             position="0 0.4 0.08"
             align="center"
-            color="#e34f1e"
+            color={LABEL_TEXT_COLOR}
             scale={LABEL_SCALE}
             width={LABEL_WIDTH}
             shader="msdf"
