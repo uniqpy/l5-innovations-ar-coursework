@@ -250,12 +250,13 @@ ON DUPLICATE KEY UPDATE
 
 -- MIND AR / QR PLAN (minimal set):
 -- 1 QR per tool:
---   TOOL-HAMMER-001
---   TOOL-WRENCH-001
---   TOOL-PLIERS-001
+--   AR-TOOL-HAMMER
+--   AR-TOOL-WRENCH
+--   AR-TOOL-PLIERS
 -- 1 QR per asset-fault combination currently seeded:
---   AF-PAX204-BRAKEPRESSURELOSS-001
---   AF-WMAIN7-BURSTPIPE-001
+--   AR-FAULT-TRAIN204-BRAKES
+--   AR-FAULT-LOCO88-ENGINE
+--   AR-FAULT-WATER7-BURSTPIPE
 
 INSERT INTO faults (fault_type_id, asset_id, severity_id, status_id, asset_fault_qr_code, notes, created_by_user_id)
 VALUES
@@ -269,8 +270,22 @@ VALUES
     (SELECT id FROM fault_assets WHERE name = 'Passenger Train Unit 204'),
     (SELECT id FROM fault_severities WHERE level = 4),
     (SELECT id FROM fault_status WHERE name = 'reported'),
-    'AF-PAX204-BRAKEPRESSURELOSS-001',
+    'AR-FAULT-TRAIN204-BRAKES',
     'Driver reports reduced braking response at Station B approach.',
+    (SELECT id FROM users WHERE email = 'field.engineer@example.com')
+  ),
+  (
+    (
+      SELECT ft.id
+      FROM fault_types ft
+      JOIN fault_component fc ON fc.id = ft.component_id
+      WHERE ft.name = 'Engine Coolant Leak' AND fc.name = 'Traction Engine'
+    ),
+    (SELECT id FROM fault_assets WHERE name = 'Freight Locomotive L-88'),
+    (SELECT id FROM fault_severities WHERE level = 5),
+    (SELECT id FROM fault_status WHERE name = 'reported'),
+    'AR-FAULT-LOCO88-ENGINE',
+    'Coolant pressure drop and rising engine bay temperature under load.',
     (SELECT id FROM users WHERE email = 'field.engineer@example.com')
   ),
   (
@@ -283,7 +298,7 @@ VALUES
     (SELECT id FROM fault_assets WHERE name = 'Water Main Sector 7'),
     (SELECT id FROM fault_severities WHERE level = 4),
     (SELECT id FROM fault_status WHERE name = 'working on'),
-    'AF-WMAIN7-BURSTPIPE-001',
+    'AR-FAULT-WATER7-BURSTPIPE',
     'Active leak flooding pavement near maintenance hatch 7C.',
     (SELECT id FROM users WHERE email = 'field.engineer@example.com')
   )
@@ -336,7 +351,7 @@ INSERT INTO tools (name, qr_code, last_checked_out_by_user_id, last_action, last
 VALUES
   (
     'Hammer',
-    'TOOL-HAMMER-001',
+    'AR-TOOL-HAMMER',
     (SELECT id FROM users WHERE email = 'field.engineer@example.com'),
     'checked_out',
     CURRENT_TIMESTAMP,
@@ -344,7 +359,7 @@ VALUES
   ),
   (
     'Adjustable Wrench',
-    'TOOL-WRENCH-001',
+    'AR-TOOL-WRENCH',
     (SELECT id FROM users WHERE email = 'admin.tech@example.com'),
     'checked_in',
     DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 1 DAY),
@@ -352,7 +367,7 @@ VALUES
   ),
   (
     'Pliers',
-    'TOOL-PLIERS-001',
+    'AR-TOOL-PLIERS',
     (SELECT id FROM users WHERE email = 'field.engineer@example.com'),
     'checked_in',
     DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 4 HOUR),
