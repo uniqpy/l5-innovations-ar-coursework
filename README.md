@@ -70,8 +70,8 @@ Open: `http://localhost:5173`
 ## 7. Test Login Credentials
 After running `auth_schema.sql`, use either:
 
-- `admin.tech@example.com` / `Test123!`
-- `field.engineer@example.com` / `Test123!`
+- `admin.tech@example.com` / `ArDemo!2026`
+- `field.engineer@example.com` / `TechFix!2026`
 
 ## 8. Troubleshooting
 - If login/session calls fail, make sure backend is running on `8080`.
