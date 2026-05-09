@@ -4,6 +4,7 @@ export const MARKERS = [
   {
     label: "Train 204 Brake Assembly",
     type: "fault",
+    assetId: 1,
     assetFaultQrCode: "AR-FAULT-TRAIN204-BRAKES",
   },
   { label: "Hammer", type: "tool", qrCode: "AR-TOOL-HAMMER" },

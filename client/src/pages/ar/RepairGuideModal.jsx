@@ -1,8 +1,19 @@
 import React from "react";
 
-const RepairGuideModal = ({ marker, ArMarker, stepIndex, onPrevious, onNext, onClose }) => {
+const RepairGuideModal = ({
+  marker,
+  ArMarker,
+  stepIndex,
+  onPrevious,
+  onNext,
+  onClose,
+  onMarkRepaired,
+  isMarkingRepaired,
+}) => {
   const guideMarker = marker || ArMarker;
   if (!guideMarker || !guideMarker.guideSteps || guideMarker.guideSteps.length === 0) return null;
+  const isFinalStep = stepIndex === guideMarker.guideSteps.length - 1;
+  const canMarkRepaired = typeof onMarkRepaired === "function" && isFinalStep;
 
   return (
     <div className="modal-overlay">
@@ -23,6 +34,11 @@ const RepairGuideModal = ({ marker, ArMarker, stepIndex, onPrevious, onNext, onC
         <button className="btn btn-secondary mt-3" onClick={onClose}>
           Close
         </button>
+        {canMarkRepaired && (
+          <button className="btn btn-success mt-2" onClick={onMarkRepaired} disabled={Boolean(isMarkingRepaired)}>
+            {isMarkingRepaired ? "Marking..." : "Mark as Repaired"}
+          </button>
+        )}
       </div>
     </div>
   );

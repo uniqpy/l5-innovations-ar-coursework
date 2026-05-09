@@ -81,6 +81,7 @@ const ArPage = ({ onLoggedOut }) => {
   const [showGuideModal, setShowGuideModal] = useState(false);
   const [guideMarker, setGuideMarker] = useState(null);
   const [guideStepIndex, setGuideStepIndex] = useState(0);
+  const [isMarkingRepaired, setIsMarkingRepaired] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const toolsByQrRef = useRef({});
   const showGuideModalRef = useRef(false);
@@ -94,9 +95,18 @@ const ArPage = ({ onLoggedOut }) => {
       body: body ? JSON.stringify(body) : undefined,
     });
 
-    const data = await response.json().catch(() => ({}));
+    const rawBody = await response.text();
+    let data = {};
+    if (rawBody) {
+      try {
+        data = JSON.parse(rawBody);
+      } catch (_parseError) {
+        data = { error: rawBody };
+      }
+    }
+
     if (!response.ok) {
-      throw new Error(data?.error || "Request failed.");
+      throw new Error(data?.error || `${response.status} ${response.statusText}` || "Request failed.");
     }
     return data;
   }, []);
@@ -203,6 +213,12 @@ const ArPage = ({ onLoggedOut }) => {
     setSelectedFault(null);
   };
 
+  const closeGuideModal = () => {
+    setShowGuideModal(false);
+    setGuideMarker(null);
+    setIsMarkingRepaired(false);
+  };
+
   const handleSubmitFaultReport = async (reportInput) => {
     const reportMarker = reportMarkerIndex !== null ? MARKERS[reportMarkerIndex] : null;
     const selectedFaultType = faultTypes.find((faultType) => faultType.name === reportInput.typeOfFault);
@@ -219,6 +235,9 @@ const ArPage = ({ onLoggedOut }) => {
 
     const responseData = await apiRequest("/api/reportfault", "POST", {
       faultTypeId: selectedFaultType?.id || null,
+      faultTypeName: reportInput.typeOfFault,
+      assetId: reportMarker?.assetId || null,
+      assetLabel: reportInput.location || reportInput.faultyPart || reportMarker?.label || "",
       assetFaultQrCode: reportMarker?.assetFaultQrCode || null,
       urgency: reportInput.urgency,
       notes: notesSegments.join(" | "),
@@ -322,13 +341,47 @@ const ArPage = ({ onLoggedOut }) => {
       setGuideMarker({
         ...marker,
         guideSteps,
+        faultTypeId: responseData.faultTypeId || null,
       });
       setGuideStepIndex(0);
+      setIsMarkingRepaired(false);
       setShowGuideModal(true);
       setScanActionPrompt(null);
     } catch (error) {
       setFaultReportNotice(error.message || "Unable to load repair guide.");
       setScanActionPrompt(null);
+    }
+  };
+
+  const handleMarkGuideFaultRepaired = async () => {
+    if (!guideMarker) return;
+
+    try {
+      setIsMarkingRepaired(true);
+      const responseData = await apiRequest("/api/markfaultrepaired", "POST", {
+        assetFaultQrCode: guideMarker.assetFaultQrCode || null,
+        faultTypeId: guideMarker.faultTypeId || null,
+      });
+
+      if (responseData.fault) {
+        setFaults((currentFaults) => {
+          const existingIndex = currentFaults.findIndex((fault) => fault.id === responseData.fault.id);
+          if (existingIndex < 0) {
+            return [responseData.fault, ...currentFaults];
+          }
+
+          return currentFaults.map((fault, index) => (index === existingIndex ? responseData.fault : fault));
+        });
+      } else {
+        await fetchFaults();
+      }
+
+      closeGuideModal();
+      setFaultReportNotice("Fault marked as repaired.");
+    } catch (error) {
+      setFaultReportNotice(error.message || "Unable to mark fault as repaired.");
+    } finally {
+      setIsMarkingRepaired(false);
     }
   };
 
@@ -438,25 +491,27 @@ const ArPage = ({ onLoggedOut }) => {
       />
 
       {scanActionPrompt && (
-        <div className="scan-action-toast">
-          <button className="btn btn-success floating-action-button scan-action-trigger" onClick={handleOpenScanAction}>
-            {scanActionPrompt.buttonLabel}
-          </button>
-        </div>
-      )}
+        <div className="floating-actions-stack">
+          {scanActionPrompt.mode === "fault" && (
+            <div className="report-fault-toast">
+              <button className="btn btn-danger floating-action-button report-fault-trigger" onClick={toggleFaultReportModal}>
+                <i className="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+                <span>Report Fault</span>
+              </button>
+              {faultReportNotice && <p className="report-fault-notice">{faultReportNotice}</p>}
+            </div>
+          )}
 
-      {scanActionPrompt?.mode === "fault" && (
-        <div className="report-fault-toast">
-          <button className="btn btn-danger floating-action-button report-fault-trigger" onClick={toggleFaultReportModal}>
-            <i className="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
-            <span>Report Fault</span>
-          </button>
-          {faultReportNotice && <p className="report-fault-notice">{faultReportNotice}</p>}
+          <div className="scan-action-toast">
+            <button className="btn btn-success floating-action-button scan-action-trigger" onClick={handleOpenScanAction}>
+              {scanActionPrompt.buttonLabel}
+            </button>
+          </div>
         </div>
       )}
 
       {!scanActionPrompt?.mode && faultReportNotice && (
-        <div className="report-fault-toast">
+        <div className="floating-notice-toast">
           <p className="report-fault-notice">{faultReportNotice}</p>
         </div>
       )}
@@ -467,7 +522,9 @@ const ArPage = ({ onLoggedOut }) => {
           stepIndex={guideStepIndex}
           onPrevious={goToPreviousGuideStep}
           onNext={goToNextGuideStep}
-          onClose={() => setShowGuideModal(false)}
+          onClose={closeGuideModal}
+          onMarkRepaired={handleMarkGuideFaultRepaired}
+          isMarkingRepaired={isMarkingRepaired}
         />
       )}
 

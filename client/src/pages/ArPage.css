@@ -160,6 +160,15 @@ video[autoplay][muted][playsinline] {
   gap: 6px;
 }
 
+.floating-notice-toast {
+  position: fixed;
+  right: 14px;
+  bottom: 92px;
+  z-index: 10003;
+  display: flex;
+  justify-content: flex-end;
+}
+
 .report-fault-trigger {
   gap: 8px;
   box-shadow: 0 10px 24px rgba(180, 30, 30, 0.48);
@@ -331,6 +340,11 @@ video[autoplay][muted][playsinline] {
   }
 
   .floating-actions-stack {
+    right: 10px;
+    bottom: 80px;
+  }
+
+  .floating-notice-toast {
     right: 10px;
     bottom: 80px;
   }

@@ -246,6 +246,101 @@ async function getAssetAndFaultTypeByQr(assetFaultQrCode) {
   return rows[0] || null;
 }
 
+async function getFaultTypeIdByName(faultTypeName) {
+  const normalizedName = String(faultTypeName || "").trim();
+  if (!normalizedName) return null;
+
+  const rows = await dbPool.query(
+    "SELECT id FROM fault_types WHERE name = ? LIMIT 1",
+    [normalizedName],
+  );
+  return rows[0]?.id ?? null;
+}
+
+async function getAssetIdFromLabel(assetLabel) {
+  const normalizedLabel = String(assetLabel || "").trim().toLowerCase();
+  if (!normalizedLabel) return null;
+
+  const tokenSet = new Set(
+    normalizedLabel
+      .split(/[^a-z0-9]+/i)
+      .map((token) => token.trim())
+      .filter((token) => token.length >= 2),
+  );
+
+  if (tokenSet.size === 0) return null;
+
+  const assets = await dbPool.query("SELECT id, name FROM fault_assets");
+  let bestAssetId = null;
+  let bestScore = 0;
+
+  assets.forEach((asset) => {
+    const candidateName = String(asset.name || "").toLowerCase();
+    let score = 0;
+    tokenSet.forEach((token) => {
+      if (candidateName.includes(token)) {
+        score += 1;
+      }
+    });
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestAssetId = asset.id;
+    }
+  });
+
+  return bestScore > 0 ? bestAssetId : null;
+}
+
+async function getMostRecentAssetIdByFaultType(faultTypeId) {
+  const rows = await dbPool.query(
+    `SELECT asset_id
+     FROM faults
+     WHERE fault_type_id = ?
+     ORDER BY updated_at DESC, id DESC
+     LIMIT 1`,
+    [faultTypeId],
+  );
+  return rows[0]?.asset_id ?? null;
+}
+
+async function getLatestOpenFaultIdForRepair(assetFaultQrCode, faultTypeId) {
+  const fixedStatusId = await getStatusIdByName("fixed");
+  if (!fixedStatusId) return null;
+
+  if (assetFaultQrCode) {
+    const byQrRows = await dbPool.query(
+      `SELECT id
+       FROM faults
+       WHERE asset_fault_qr_code = ? AND status_id <> ?
+       ORDER BY updated_at DESC, id DESC
+       LIMIT 1`,
+      [assetFaultQrCode, fixedStatusId],
+    );
+
+    if (byQrRows[0]?.id) {
+      return byQrRows[0].id;
+    }
+  }
+
+  if (faultTypeId) {
+    const byTypeRows = await dbPool.query(
+      `SELECT id
+       FROM faults
+       WHERE fault_type_id = ? AND status_id <> ?
+       ORDER BY updated_at DESC, id DESC
+       LIMIT 1`,
+      [faultTypeId, fixedStatusId],
+    );
+
+    if (byTypeRows[0]?.id) {
+      return byTypeRows[0].id;
+    }
+  }
+
+  return null;
+}
+
 async function getDefaultSeverityIdForFaultType(faultTypeId) {
   const rows = await dbPool.query("SELECT severity_id FROM fault_types WHERE id = ? LIMIT 1", [faultTypeId]);
   return rows[0]?.severity_id ?? null;
@@ -402,15 +497,23 @@ app.post("/api/reportfault", requireAuth, async (req, res) => {
   try {
     const {
       faultTypeId: faultTypeIdInput,
+      faultTypeName: faultTypeNameInput,
       assetId: assetIdInput,
+      assetLabel: assetLabelInput,
       assetFaultQrCode: assetFaultQrCodeInput,
       urgency,
       notes,
     } = req.body || {};
 
     const assetFaultQrCode = String(assetFaultQrCodeInput || "").trim().slice(0, 80);
+    const assetLabel = String(assetLabelInput || "").trim().slice(0, 160);
+    const faultTypeName = String(faultTypeNameInput || "").trim().slice(0, 100);
     let faultTypeId = Number(faultTypeIdInput || 0);
     let assetId = Number(assetIdInput || 0);
+
+    if (!faultTypeId && faultTypeName) {
+      faultTypeId = Number(await getFaultTypeIdByName(faultTypeName)) || 0;
+    }
 
     if ((!faultTypeId || !assetId) && assetFaultQrCode) {
       const resolvedPair = await getAssetAndFaultTypeByQr(assetFaultQrCode);
@@ -420,8 +523,29 @@ app.post("/api/reportfault", requireAuth, async (req, res) => {
       }
     }
 
+    if (!assetId && assetLabel) {
+      assetId = Number(await getAssetIdFromLabel(assetLabel)) || 0;
+    }
+
+    if (!assetId && assetFaultQrCode) {
+      const qrAsLabel = assetFaultQrCode
+        .replace(/^AR-FAULT-/i, "")
+        .replace(/-/g, " ")
+        .trim();
+      if (qrAsLabel) {
+        assetId = Number(await getAssetIdFromLabel(qrAsLabel)) || 0;
+      }
+    }
+
+    if (!assetId && faultTypeId) {
+      assetId = Number(await getMostRecentAssetIdByFaultType(faultTypeId)) || 0;
+    }
+
     if (!faultTypeId || !assetId) {
-      res.status(400).json({ error: "assetId and faultTypeId (or a valid assetFaultQrCode) are required." });
+      res.status(400).json({
+        error:
+          "Unable to resolve asset and fault type. Provide a known fault type and scan a registered fault marker.",
+      });
       return;
     }
 
@@ -442,7 +566,7 @@ app.post("/api/reportfault", requireAuth, async (req, res) => {
 
     const notesText = String(notes || "").trim();
     const safeNotesText = notesText ? notesText.slice(0, 500) : null;
-    const insertResult = await dbPool.query(
+    const upsertResult = await dbPool.query(
       `INSERT INTO faults (
          fault_type_id,
          asset_id,
@@ -453,7 +577,17 @@ app.post("/api/reportfault", requireAuth, async (req, res) => {
          created_by_user_id,
          created_at,
          updated_at
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP(), UTC_TIMESTAMP())`,
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP(), UTC_TIMESTAMP())
+       ON DUPLICATE KEY UPDATE
+         id = LAST_INSERT_ID(id),
+         fault_type_id = VALUES(fault_type_id),
+         asset_id = VALUES(asset_id),
+         severity_id = VALUES(severity_id),
+         status_id = VALUES(status_id),
+         asset_fault_qr_code = VALUES(asset_fault_qr_code),
+         notes = VALUES(notes),
+         created_by_user_id = VALUES(created_by_user_id),
+         updated_at = UTC_TIMESTAMP()`,
       [
         faultTypeId,
         assetId,
@@ -464,6 +598,9 @@ app.post("/api/reportfault", requireAuth, async (req, res) => {
         req.auth.userId,
       ],
     );
+
+    const faultId = Number(upsertResult.insertId);
+    const wasExistingFault = Number(upsertResult.affectedRows) > 1;
 
     const insertedFaultRows = await dbPool.query(
       `SELECT
@@ -487,16 +624,84 @@ app.post("/api/reportfault", requireAuth, async (req, res) => {
        LEFT JOIN users u ON u.id = f.created_by_user_id
        WHERE f.id = ?
        LIMIT 1`,
-      [Number(insertResult.insertId)],
+      [faultId],
     );
 
     const createdFault = insertedFaultRows[0];
-    res.status(201).json({
+    res.status(wasExistingFault ? 200 : 201).json({
       ok: true,
       fault: createdFault ? formatFaultRowForUi(createdFault) : null,
+      wasUpdated: wasExistingFault,
     });
   } catch (error) {
     console.error("reportfault error:", error);
+    res.status(500).json({ error: "Internal server error." });
+  }
+});
+
+app.post("/api/markfaultrepaired", requireAuth, async (req, res) => {
+  try {
+    const assetFaultQrCode = String(req.body?.assetFaultQrCode || "").trim().slice(0, 80);
+    let faultTypeId = Number(req.body?.faultTypeId || 0);
+
+    if (!faultTypeId && assetFaultQrCode) {
+      const resolvedPair = await getAssetAndFaultTypeByQr(assetFaultQrCode);
+      if (resolvedPair?.fault_type_id) {
+        faultTypeId = Number(resolvedPair.fault_type_id);
+      }
+    }
+
+    const fixedStatusId = await getStatusIdByName("fixed");
+    if (!fixedStatusId) {
+      res.status(500).json({ error: "Fault status configuration is missing." });
+      return;
+    }
+
+    const targetFaultId = await getLatestOpenFaultIdForRepair(assetFaultQrCode, faultTypeId);
+    if (!targetFaultId) {
+      res.status(404).json({ error: "No active fault found for this guide marker." });
+      return;
+    }
+
+    await dbPool.query(
+      `UPDATE faults
+       SET status_id = ?, updated_at = UTC_TIMESTAMP()
+       WHERE id = ?`,
+      [fixedStatusId, targetFaultId],
+    );
+
+    const repairedFaultRows = await dbPool.query(
+      `SELECT
+         f.id,
+         f.asset_fault_qr_code,
+         f.notes,
+         f.created_at,
+         fa.name AS asset_name,
+         fc.name AS component_name,
+         ft.name AS fault_type_name,
+         fst.name AS status_name,
+         fsev.name AS severity_name,
+         fsev.level AS severity_level,
+         u.email AS reported_by_email
+       FROM faults f
+       INNER JOIN fault_assets fa ON fa.id = f.asset_id
+       INNER JOIN fault_types ft ON ft.id = f.fault_type_id
+       INNER JOIN fault_component fc ON fc.id = ft.component_id
+       INNER JOIN fault_status fst ON fst.id = f.status_id
+       INNER JOIN fault_severities fsev ON fsev.id = f.severity_id
+       LEFT JOIN users u ON u.id = f.created_by_user_id
+       WHERE f.id = ?
+       LIMIT 1`,
+      [targetFaultId],
+    );
+
+    const repairedFault = repairedFaultRows[0];
+    res.status(200).json({
+      ok: true,
+      fault: repairedFault ? formatFaultRowForUi(repairedFault) : null,
+    });
+  } catch (error) {
+    console.error("markfaultrepaired error:", error);
     res.status(500).json({ error: "Internal server error." });
   }
 });
@@ -523,6 +728,7 @@ app.post("/api/recievefaults", requireAuth, async (_req, res) => {
        INNER JOIN fault_status fst ON fst.id = f.status_id
        INNER JOIN fault_severities fsev ON fsev.id = f.severity_id
        LEFT JOIN users u ON u.id = f.created_by_user_id
+       WHERE fst.name <> 'fixed'
        ORDER BY f.created_at DESC
        LIMIT 200`,
     );
@@ -748,6 +954,7 @@ app.post("/api/fetchstepbystep", requireAuth, async (req, res) => {
 
     res.status(200).json({
       steps: stepRows.map((row) => row.instruction_step),
+      faultTypeId,
       faultTypeName: stepRows[0]?.fault_type_name || null,
       componentName: stepRows[0]?.component_name || null,
     });
