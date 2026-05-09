@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -8,6 +8,7 @@ import "./ArPage.css";
 import ArScene from "./ar/ArScene";
 import HelpModal from "./ar/HelpModal";
 import FaultsModal from "./ar/FaultsModal";
+import FaultReportModal from "./ar/FaultReportModal";
 import ToolTrackerModal from "./ar/ToolTrackerModal";
 import ScanConfirmPopup from "./ar/ScanConfirmPopup";
 import RepairGuideModal from "./ar/RepairGuideModal";
@@ -69,8 +70,12 @@ const ArPage = ({ onLoggedOut }) => {
   const navigate = useNavigate();
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showFaultsModal, setShowFaultsModal] = useState(false);
+  const [showFaultReportModal, setShowFaultReportModal] = useState(false);
   const [showToolTrackerModal, setShowToolTrackerModal] = useState(false);
   const [selectedFault, setSelectedFault] = useState(null);
+  const [reportedFaults, setReportedFaults] = useState([]);
+  const [faultReportNotice, setFaultReportNotice] = useState("");
+  const [reportMarkerIndex, setReportMarkerIndex] = useState(null);
   const [checkedOutToolIndexes, setCheckedOutToolIndexes] = useState([]);
   const [scanConfirmation, setScanConfirmation] = useState(null);
   const [scanActionPrompt, setScanActionPrompt] = useState(null);
@@ -116,6 +121,18 @@ const ArPage = ({ onLoggedOut }) => {
     setSelectedFault(null);
   };
 
+  const toggleFaultReportModal = () => {
+    setShowFaultReportModal((currentState) => {
+      const nextState = !currentState;
+      if (nextState) {
+        setReportMarkerIndex(scanActionPrompt?.targetIndex ?? null);
+      } else {
+        setReportMarkerIndex(null);
+      }
+      return nextState;
+    });
+  };
+
   const toggleToolTrackerModal = () => {
     setShowToolTrackerModal((currentState) => !currentState);
   };
@@ -126,6 +143,26 @@ const ArPage = ({ onLoggedOut }) => {
 
   const handleBackToFaultsList = () => {
     setSelectedFault(null);
+  };
+
+  const handleSubmitFaultReport = async (reportInput) => {
+    const reportedAt = new Date();
+    const locationLabel = reportInput.location ? ` at ${reportInput.location}` : "";
+    const notesLabel = reportInput.notes || "No additional notes were provided.";
+
+    const reportedFault = {
+      id: `reported-${reportedAt.getTime()}`,
+      title: `${reportInput.typeOfFault} (${reportInput.urgency})`,
+      description: `${reportInput.faultyPart}${locationLabel}`,
+      details: `Reported on ${reportedAt.toLocaleString()}. ${notesLabel}`,
+    };
+
+    setReportedFaults((currentFaults) => [reportedFault, ...currentFaults]);
+    setShowFaultReportModal(false);
+    setReportMarkerIndex(null);
+    setShowFaultsModal(true);
+    setSelectedFault(reportedFault);
+    setFaultReportNotice("Fault report submitted.");
   };
 
   const handleArTargetFound = useCallback((targetIndex) => {
@@ -223,6 +260,21 @@ const ArPage = ({ onLoggedOut }) => {
   const checkedOutTools = checkedOutToolIndexes
     .map((index) => MARKERS[index]?.label || `Marker ${index}`)
     .sort((a, b) => a.localeCompare(b));
+  const allFaults = [...reportedFaults, ...faultsData.faults];
+  const faultTypeOptions = faultsData.faults.map((fault) => fault.title);
+  const reportMarker = reportMarkerIndex !== null ? MARKERS[reportMarkerIndex] : null;
+  const reportMarkerLabel = reportMarker?.label || "";
+  const reportLocation = reportMarker?.location || reportMarkerLabel;
+
+  useEffect(() => {
+    if (!faultReportNotice) return undefined;
+
+    const timeoutId = setTimeout(() => {
+      setFaultReportNotice("");
+    }, 3000);
+
+    return () => clearTimeout(timeoutId);
+  }, [faultReportNotice]);
 
   //repair guide logic.
   const activeGuideMarker = guideMarkerIndex !== null ? MARKERS[guideMarkerIndex] : null;
@@ -267,11 +319,21 @@ const ArPage = ({ onLoggedOut }) => {
 
       {showFaultsModal && (
         <FaultsModal
-          faults={faultsData.faults}
+          faults={allFaults}
           selectedFault={selectedFault}
           onSelectFault={handleSelectFault}
           onBackToList={handleBackToFaultsList}
           onClose={toggleFaultsModal}
+        />
+      )}
+
+      {showFaultReportModal && (
+        <FaultReportModal
+          onClose={toggleFaultReportModal}
+          onSubmit={handleSubmitFaultReport}
+          initialFaultyPart={reportMarkerLabel}
+          initialLocation={reportLocation}
+          faultTypeOptions={faultTypeOptions}
         />
       )}
 
@@ -290,6 +352,16 @@ const ArPage = ({ onLoggedOut }) => {
           <button className="btn btn-dark scan-action-trigger" onClick={handleOpenScanAction}>
             {scanActionPrompt.buttonLabel}
           </button>
+        </div>
+      )}
+
+      {scanActionPrompt && (
+        <div className="report-fault-toast">
+          <button className="btn btn-danger report-fault-trigger" onClick={toggleFaultReportModal}>
+            <i className="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+            <span>Report Fault</span>
+          </button>
+          {faultReportNotice && <p className="report-fault-notice">{faultReportNotice}</p>}
         </div>
       )}
 

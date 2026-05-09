@@ -74,6 +74,7 @@ const ArScene = ({ onTargetFound: ArMarkerFound, onTargetLost: ArMarkerLost }) =
       embedded
       renderer="colorManagement: true, physicallyCorrectLights"
       vr-mode-ui="enabled: false"
+      xr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: false"
     >
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
