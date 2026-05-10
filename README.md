@@ -19,7 +19,7 @@ This project has:
    - `server/sql/auth_schema.sql`
 3. Click **Go**
 
-This creates database `ar_maintenance` and seeds sample data.
+This creates database `ar_maintenance` and inserts sample data.
 
 ## 4. Backend Environment
 The backend uses `server/.env` (already included in this repo).  
@@ -33,7 +33,7 @@ DB_PASSWORD=
 DB_NAME=ar_maintenance
 ```
 
-If your local MariaDB uses a different password/user, update `server/.env`.
+If your local MariaDB uses a different password/user, update `server/.env`, but if you kept the XAMPP defaults everything will be condfigured fine.
 
 ## 5. Install Dependencies
 Open two terminals in the project root.
